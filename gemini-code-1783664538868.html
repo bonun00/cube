@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 큐브 마스터 가이드</title>
+    
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script type="module" src="https://cdn.cubing.net/js/cubing/twisty"></script>
+
+    <style>
+        /* ==========================================================================
+           Design System & Variables
+           ========================================================================== */
+        :root {
+            --bg-color: #0B0E14; /* Deep Space Dark */
+            --surface-color: #161B25;
+            --text-main: #F8F9FA;
+            --text-muted: #A0AAB5;
+            --accent-cyan: #00F0FF; /* Neon Cyan */
+            --accent-yellow: #FFDE00; /* Point Yellow */
+            --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3 { line-height: 1.3; font-weight: 700; }
+
+        section {
+            padding: 120px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spacer { height: 100px; }
+
+        /* ==========================================================================
+           1. Hero Section
+           ========================================================================== */
+        #hero {
+            position: relative;
+            height: 100vh;
+            max-width: 100%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #cube-canvas-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.6;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-size: 3.5rem; margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            word-break: keep-all;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem; color: var(--text-muted); font-weight: 400;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .highlight-cyan { color: var(--accent-cyan); }
+        .highlight-yellow { color: var(--accent-yellow); }
+
+        /* ==========================================================================
+           2. Problem & Solution
+           ========================================================================== */
+        #problem-solution { text-align: center; max-width: 800px; }
+        .section-title { font-size: 2.5rem; margin-bottom: 30px; }
+        .section-desc { font-size: 1.2rem; color: var(--text-muted); word-break: keep-all; }
+
+        /* ==========================================================================
+           3. Core Value Cards
+           ========================================================================== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px; width: 100%; margin-top: 60px;
+        }
+
+        .card {
+            background-color: var(--surface-color); padding: 40px 30px;
+            border-radius: 16px; text-align: left;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-10px); border-color: var(--accent-cyan);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1);
+        }
+
+        .card-icon { font-size: 2rem; margin-bottom: 20px; display: block; }
+        .card-title { font-size: 1.3rem; margin-bottom: 15px; color: var(--accent-yellow); }
+        .card-text { font-size: 1rem; color: var(--text-muted); }
+
+        /* ==========================================================================
+           3.5 Notation Guide (회전 기호 안내)
+           ========================================================================== */
+        #notation {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .notation-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .notation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+
+        .notation-item {
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .notation-letter {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 5px;
+        }
+
+        .notation-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .notation-rule-box {
+            background-color: rgba(255, 222, 0, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            text-align: left;
+        }
+
+        .notation-rule-box p {
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+        .notation-rule-box p:last-child { margin-bottom: 0; }
+        .notation-rule-box strong { color: var(--accent-yellow); }
+
+        /* ==========================================================================
+           4. Tutorial Steps
+           ========================================================================== */
+        #tutorial { width: 100%; max-width: 1100px; }
+        
+        .step-container {
+            display: flex; flex-direction: column; gap: 80px; margin-top: 60px;
+            width: 100%;
+        }
+
+        .step-block {
+            display: flex; flex-direction: column; align-items: center;
+            background-color: var(--surface-color); border-radius: 20px; padding: 50px 40px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            border: 1px solid transparent;
+            width: 100%;
+        }
+
+        .step-block:hover {
+            transform: translateY(-5px); border-color: var(--accent-cyan);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, 0.05);
+        }
+
+        .step-info { text-align: center; max-width: 800px; margin-bottom: 30px; }
+        .step-badge {
+            display: inline-block; color: var(--bg-color); background-color: var(--accent-yellow);
+            padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; margin-bottom: 15px;
+        }
+        .step-title { font-size: 1.8rem; margin-bottom: 15px; color: var(--text-main); }
+        .step-desc { color: var(--text-muted); font-size: 1.05rem; word-break: keep-all; line-height: 1.6; margin-bottom: 20px;}
+
+        /* 사용 기호 뱃지 스타일 (시작 큐브 아래에 배치, 상황별로 내용 변경) */
+        .used-notation-box {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            max-width: 100%;
+            background-color: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .used-notation-box strong {
+            color: var(--accent-cyan);
+            letter-spacing: 2px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        /* 기준 시점으로 되돌리기 버튼 */
+        .view-reset-btn {
+            margin-top: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: rgba(0, 240, 255, 0.08);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-family: var(--font-family);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .view-reset-btn:hover {
+            background-color: rgba(0, 240, 255, 0.18);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+        }
+
+        .view-reset-btn:active { transform: scale(0.96); }
+
+        /* Case Selection Tabs */
+        .case-tabs {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            margin-bottom: 40px; width: 100%;
+        }
+
+        .case-tab {
+            background-color: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 20px;
+            border-radius: 30px; font-family: var(--font-family); font-size: 0.95rem;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+
+        .case-tab:hover { background-color: rgba(255, 255, 255, 0.1); color: var(--text-main); }
+        .case-tab.active {
+            background-color: rgba(0, 240, 255, 0.1); color: var(--accent-cyan);
+            border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+            font-weight: 700;
+        }
+
+        /* Comparison UI */
+        .cube-comparison {
+            display: flex; align-items: center; justify-content: center; gap: 30px; width: 100%;
+        }
+
+        .cube-box {
+            display: flex; flex-direction: column; align-items: center;
+            background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 16px;
+            width: 100%; max-width: 400px; border: 1px dashed var(--text-muted);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .cube-label {
+            font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.1); padding: 6px 16px; border-radius: 20px;
+        }
+
+        .goal-box { border-color: var(--accent-cyan); }
+        .goal-box .cube-label { color: var(--bg-color); background-color: var(--accent-cyan); }
+
+        .cube-arrow { font-size: 2.5rem; color: var(--text-muted); font-weight: 300; }
+
+        twisty-player { width: 100%; height: 300px; background-color: transparent; }
+
+        /* ==========================================================================
+           5. CTA
+           ========================================================================== */
+        #cta { text-align: center; padding: 150px 20px; }
+        .cta-button {
+            display: inline-block; margin-top: 40px; padding: 18px 48px;
+            font-size: 1.25rem; font-weight: 700; color: var(--bg-color);
+            background-color: var(--accent-cyan); border: none; border-radius: 50px;
+            text-decoration: none; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+        .cta-button:hover { background-color: #fff; box-shadow: 0 0 30px rgba(0, 240, 255, 0.6); transform: scale(1.05); }
+
+        /* Animations */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .fade-in.is-visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 900px) {
+            .cube-comparison { flex-direction: column; gap: 15px; }
+            .cube-arrow { transform: rotate(90deg); margin: 10px 0; }
+            twisty-player { height: 250px; }
+            .step-block { padding: 30px 20px; }
+            .hero-title { font-size: 2.2rem; }
+            .section-title { font-size: 2rem; }
+            .used-notation-box { flex-direction: column; gap: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <section id="hero">
+        <div id="cube-canvas-container"></div>
+        <div class="hero-content fade-in">
+            <h1 class="hero-title">돌리다 보면 풀린다!<br><span class="highlight-cyan">3D로 배우는 가장 직관적인</span> 큐브 마스터 가이드</h1>
+            <p class="hero-subtitle">더 이상 복잡한 기호와 텍스트 공식에 좌절하지 마세요.</p>
+        </div>
+    </section>
+
+    <section id="problem-solution" class="fade-in">
+        <h2 class="section-title">글로 배우는 큐브는 이제 그만.</h2>
+        <p class="section-desc">
+            텍스트 해설을 보며 헷갈리던 시절은 끝났습니다.<br><br>
+            우리는 초보자들이 가장 많이 막히는 구간을 7개의 정석 단계로 쪼개고,
+            <span class="highlight-yellow">완벽한 인터랙티브 3D 뷰어</span>로 구현했습니다.
+            눈으로 보고, 상황별 큐브를 직접 돌려보며 자연스럽게 원리를 깨닫게 됩니다.
+        </p>
+    </section>
+
+    <section id="notation" class="fade-in">
+        <div class="notation-container">
+            <h2 class="section-title" style="margin-bottom: 10px;">사전 지식: 큐브 회전 기호 읽는 법</h2>
+            <p class="section-desc">공식에 등장하는 알파벳은 <strong>해당 면(Face)을 시계 방향으로 90도 돌리라는 뜻</strong>입니다.<br>기호의 원리만 살짝 알면 튜토리얼을 200% 더 쉽게 이해할 수 있습니다.</p>
+
+            <h3 style="margin-top: 60px; font-size: 1.3rem; color: var(--accent-cyan);">① 조각의 이름부터 알아두세요</h3>
+            <div class="notation-grid" style="margin-top: 20px;">
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">센터</div><div class="notation-desc">각 면 정중앙의 <strong>1색</strong> 조각 (6개)<br>절대 움직이지 않아서<br>그 면의 <strong>색 기준</strong>이 됩니다</div></div>
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">엣지</div><div class="notation-desc">모서리 가운데의 <strong>2색</strong> 조각 (12개)<br>십자가를 만들 때<br>움직이는 주인공입니다</div></div>
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">코너</div><div class="notation-desc">꼭짓점의 <strong>3색</strong> 조각 (8개)<br>층을 완성할 때<br>마지막으로 끼워 넣습니다</div></div>
+            </div>
+
+            <h3 style="margin-top: 40px; font-size: 1.3rem; color: var(--accent-cyan);">② 회전 기호 6가지</h3>
+            <div class="notation-grid">
+                <div class="notation-item"><div class="notation-letter">R</div><div class="notation-desc">Right<br>(오른쪽 면)</div></div>
+                <div class="notation-item"><div class="notation-letter">L</div><div class="notation-desc">Left<br>(왼쪽 면)</div></div>
+                <div class="notation-item"><div class="notation-letter">U</div><div class="notation-desc">Up<br>(윗면)</div></div>
+                <div class="notation-item"><div class="notation-letter">D</div><div class="notation-desc">Down<br>(아랫면)</div></div>
+                <div class="notation-item"><div class="notation-letter">F</div><div class="notation-desc">Front<br>(앞면)</div></div>
+                <div class="notation-item"><div class="notation-letter">B</div><div class="notation-desc">Back<br>(뒷면)</div></div>
+            </div>
+
+            <div class="notation-rule-box">
+                <p>💡 <strong>기본 규칙 (시계 방향 기준):</strong> 해당 면을 <strong>정면으로 바라봤을 때</strong>를 기준으로 시계 방향으로 90도 회전합니다.</p>
+                <p>🔄 <strong>' (프라임) 기호:</strong> 알파벳 뒤에 작은따옴표(')가 붙으면(예: <strong>U'</strong>) <strong>반시계 방향</strong>으로 90도 돌리라는 뜻입니다.</p>
+                <p>✌️ <strong>2 기호:</strong> 알파벳 뒤에 숫자 2가 붙으면(예: <strong>F2</strong>) 시계/반시계 상관없이 <strong>180도(두 번)</strong> 돌리라는 뜻입니다.</p>
+                <p>🧱 <strong>소문자 (w) 기호:</strong> Fw 또는 f 처럼 쓰이면, 앞면 한 줄이 아니라 <strong>앞의 두 줄을 한꺼번에 잡고</strong> 돌리라는 뜻입니다.</p>
+            </div>
+        </div>
+    </section>
+<section id="tutorial" class="fade-in">
+    <h2 class="section-title">정석 레이어 해법 7단계 가이드</h2>
+    <p class="section-desc">아래층부터 차곡차곡 쌓아 올리는 방식입니다. Step 1~2에서는 <strong>흰색 센터를 위로</strong> 들고 십자가를 만들고, Step 3부터는 큐브를 뒤집어 <strong>흰색 면을 바닥에</strong> 두고 진행합니다.<br>내 큐브와 같은 상황을 골라 재생 버튼(▶)을 눌러 따라 해보세요. 공식이 한 번에 안 통해도 괜찮습니다 — 대부분 같은 공식을 반복하면 맞춰지게 되어 있습니다.</p>
+
+    <div class="step-container">
+
+        <!-- STEP 1 : 흰색 십자가 (흰색 센터를 위로 들고 흰 엣지 모으기) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 1</span>
+                <h3 class="step-title">흰색 십자가 만들기</h3>
+                <p class="step-desc"><strong>흰색 센터를 위로</strong> 든 채, 흰색 센터 주변으로 하얀색 엣지 4개를 올려 십자가 모양을 만듭니다. (옆면 색은 아직 안 맞아도 됩니다 — 다음 단계에서 맞춥니다.) 흰 엣지가 지금 <strong>어디에 있느냐</strong>에 따라 올리는 방법이 다르니 아래 상황을 골라보세요. 올리려는 윗면 자리가 이미 다른 흰 엣지로 차 있다면, 윗면(U)을 돌려 빈자리를 그 위로 가져온 뒤 공식을 쓰면 됩니다.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step1">
+                <button class="case-tab active" data-alg="F2">상황 1: 흰 엣지가 바닥에 있을 때</button>
+                <button class="case-tab" data-alg="R">상황 2: 흰 엣지가 중간층 옆에 꽂혔을 때</button>
+                <button class="case-tab" data-alg="F U' R U">상황 3: 흰 엣지가 위에 있지만 뒤집혔을 때</button>
+                <button class="case-tab" data-alg="F R' D' R F2">종합 예시: 섞인 상태에서 모으기</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step1" puzzle="3x3x3" alg="F2"
+                        experimental-setup-alg="F2 D R2 D' F2" experimental-setup-anchor="end"
+                        experimental-stickering="Daisy" background="none" control-panel="bottom"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step1">F2</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (윗면 흰 십자가)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="F2 D R2 D' F2"
+                        experimental-stickering="Daisy" background="none" control-panel="none"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- STEP 2 : 십자가 색 맞추기 (옆면 색을 센터와 정렬) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 2</span>
+                <h3 class="step-title">십자가 색 맞추기 (센터와 정렬)</h3>
+                <p class="step-desc">윗면 십자가는 모양만으로는 부족합니다 — 각 흰 엣지의 <strong>옆면 색이 같은 색 센터와 일치</strong>해야 진짜 완성입니다. 색을 안 맞추고 넘어가면 다음 단계가 전부 어긋나요. 먼저 윗면(U)을 돌려 최대한 많은 엣지를 맞춰보세요. 그래도 서로 자리가 바뀐 엣지가 있다면, 교환할 두 엣지가 <strong>앞/오른쪽(이웃)</strong> 또는 <strong>앞/뒤(마주 봄)</strong>에 오도록 큐브를 잡고 아래 교환 공식을 쓰세요. 네 방향이 모두 맞으면 <strong>큐브를 통째로 뒤집어</strong> 흰 십자가를 바닥으로 — 다음 단계 준비 완료!</p>
+            </div>
+            <div class="case-tabs" id="tabs-step1b">
+                <button class="case-tab active" data-alg="U">상황 1: U만 돌려도 맞을 때 (기준 정렬)</button>
+                <button class="case-tab" data-alg="F2 D R2 D' F2">상황 2: 이웃한 엣지 두 개가 서로 바뀌었을 때</button>
+                <button class="case-tab" data-alg="F2 D2 B2 D2 F2">상황 3: 마주 보는 엣지 두 개가 서로 바뀌었을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step1b" puzzle="3x3x3" alg="U" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:IIIIIIII,CENTERS:------"
+                        background="none" control-panel="bottom"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step1b">U</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (옆면 색 일치)</span>
+                    <twisty-player puzzle="3x3x3"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:IIIIIIII,CENTERS:------"
+                        background="none" control-panel="none"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3 : 1층 완성 (흰 코너) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 3</span>
+                <h3 class="step-title">1층 완성 (코너 넣기)</h3>
+                <p class="step-desc">하얀색을 포함한 코너 조각을 바닥 제자리에 넣어 흰색 면 전체를 완성합니다. 먼저 윗층에서 흰색이 들어간 코너를 찾고, U를 돌려 <strong>그 코너가 들어갈 자리 바로 위</strong>(코너의 옆면 두 색과 같은 센터 사이)에 놓으세요. 그 다음 <strong>흰 스티커가 향하는 방향</strong>에 따라 공식을 고르면 됩니다. 한 번에 안 들어가면 같은 공식을 반복하세요.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step2">
+                <button class="case-tab active" data-alg="R U R'">상황 1: 흰색이 옆(오른쪽)을 향할 때</button>
+                <button class="case-tab" data-alg="F' U' F">상황 2: 흰색이 앞을 향할 때</button>
+                <button class="case-tab" data-alg="R U2 R' U' R U R'">상황 3: 흰색이 위를 향할 때</button>
+                <button class="case-tab" data-alg="R U R' U' R U R'">예외: 코너가 자리에 뒤집혀 박혔을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (바닥 시점 ▶)</span>
+                    <twisty-player id="player-step2" puzzle="3x3x3" alg="R U R'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:----IIII,CENTERS:-IIIII"
+                        background="none" control-panel="bottom" camera-latitude="-34"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step2">R U R'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (흰 1층 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:----IIII,CENTERS:-IIIII"
+                        background="none" control-panel="none" camera-latitude="-34"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4 : 2층 완성 -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 4</span>
+                <h3 class="step-title">2층 완성 (엣지 이동)</h3>
+                <p class="step-desc">맨 윗층에서 <strong>노란색이 없는 엣지</strong>를 찾으세요. U를 돌려 그 엣지의 앞면 색을 같은 색 센터와 맞추면 거꾸로 된 T(⊤) 모양이 됩니다. 이제 엣지의 <strong>윗면 스티커 색</strong>을 확인하세요 — 오른쪽 센터 색과 같으면 '오른쪽으로', 왼쪽 센터 색과 같으면 '왼쪽으로' 밀어 넣으면 됩니다.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step4">
+                <button class="case-tab active" data-alg="U R U' R' U' F' U F">상황 1: 오른쪽으로 밀어 넣기</button>
+                <button class="case-tab" data-alg="U' L' U L U F U' F'">상황 2: 왼쪽으로 밀어 넣기</button>
+                <button class="case-tab" data-alg="R U' R' U F' U F U' R U R'">예외: 제자리에서 뒤집혔을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step4" puzzle="3x3x3" alg="U R U' R' U' F' U F"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIII----,CORNERS:----IIII,CENTERS:-----I"
+                        background="none" control-panel="bottom" camera-latitude="-25"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step4">U R U' R' U' F' U F</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (2층까지 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:----IIII----,CORNERS:----IIII,CENTERS:-----I"
+                        background="none" control-panel="none" camera-latitude="-25"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5 : 노란 십자가 -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 5</span>
+                <h3 class="step-title">노란색 십자가 만들기</h3>
+                <p class="step-desc">이제 윗면(노란색)을 봅니다. 윗면 엣지가 만드는 노란색 모양(점 •, ㄱ자, 일자 ―)을 확인하세요. <strong>잡는 방향이 중요합니다:</strong> 일자형은 가로(좌↔우)가 되게, ㄱ자형은 꺾인 부분이 왼쪽 뒤(9시~12시 방향)를 향하게 잡은 뒤 공식을 돌리세요. 점 모양은 공식을 돌리면 ㄱ자가 되고, 이어서 반복하면 십자가가 됩니다. 아래 두 층은 공식이 끝나면 원래대로 돌아오니 걱정하지 마세요.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step5">
+                <button class="case-tab active" data-alg="F R U R' U' F'">모양 1: 일자형 ( - )</button>
+                <button class="case-tab" data-alg="Fw R U R' U' Fw'">모양 2: 기역자형 ( ㄱ )</button>
+                <button class="case-tab" data-alg="F R U R' U' F' U2 Fw R U R' U' Fw'">모양 3: 점 ( • )</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player id="player-step5" puzzle="3x3x3" alg="F R U R' U' F'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:------------,CORNERS:----IIII,CENTERS:------"
+                        background="none" control-panel="bottom" camera-latitude="34"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step5">F R U R' U' F'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (노란 십자가)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:------------,CORNERS:----IIII,CENTERS:------"
+                        background="none" control-panel="none" camera-latitude="34"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 6 : 노란 면 완성 (OLL) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 6</span>
+                <h3 class="step-title">노란색 윗면 완성</h3>
+                <p class="step-desc">코너 조각들의 방향을 뒤집어 윗면 전체를 노란색으로 만듭니다. 윗면에 <strong>노란 코너가 딱 1개</strong>만 있으면 '물고기 모양'입니다 — 그 노란 코너가 <strong>왼쪽 앞</strong>(물고기 머리가 나를 향하게)에 오도록 잡고 공식을 돌리세요. 물고기 모양이 아니라면 아무 방향으로나 잡고 공식을 한 번 돌리면 물고기가 나타납니다. 윗면이 전부 노란색이 될 때까지 반복하세요.</p>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player puzzle="3x3x3" alg="R U R' U R U2 R'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        background="none" control-panel="bottom" camera-latitude="50"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 단계에서 사용하는 공식:</span>
+                        <strong>R U R' U R U2 R'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (노란 면 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        background="none" control-panel="none" camera-latitude="50"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL : PLL -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge" style="background-color: var(--accent-cyan); color: var(--bg-color);">Final Step</span>
+                <h3 class="step-title">마지막 테두리 정렬 (PLL)</h3>
+                <p class="step-desc"><strong>순서 1:</strong> 옆면 맨 윗줄의 양끝 코너 색이 같은 면('헤드라이트')을 찾아 <strong>뒤쪽으로 보낸 뒤</strong> 공식을 돌리면 코너 4개의 위치가 맞습니다. 헤드라이트가 하나도 없으면 아무 방향으로나 공식을 한 번 돌리면 생깁니다. <strong>순서 2:</strong> 코너가 다 맞으면 색이 완전히 맞은 한 면을 <strong>뒤쪽에 두고</strong> 엣지 공식을 돌리세요. 한 번에 안 되면 한 번 더 — 그러면 완성입니다! 🎉</p>
+            </div>
+            <div class="case-tabs" id="tabs-step7">
+                <button class="case-tab active" data-alg="R U R' U' R' F R2 U' R' U' R U R' F'">순서 1: 코너 맞추기 (헤드라이트)</button>
+                <button class="case-tab" data-alg="R U' R U R U R U' R' U' R2">순서 2: 엣지 3개 돌리기 (최종 완성)</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player id="player-step7" puzzle="3x3x3" alg="R U R' U' R' F R2 U' R' U' R U R' F'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        background="none" control-panel="bottom" camera-latitude="25"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step7">R U R' U' R' F R2 U' R' U' R U R' F'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">완성된 형태 🎉</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        background="none" control-panel="none" camera-latitude="25"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+    <section id="cta" class="fade-in">
+        <h2 class="section-title">준비되셨나요?</h2>
+        <p class="section-desc">이제 3D로 원리를 깨우쳤으니 실제 큐브를 직접 돌려볼 차례입니다.</p>
+        <a href="#tutorial" class="cta-button">튜토리얼 다시 돌려보기 ↺</a>
+    </section>
+    <div class="spacer"></div>
+
+    <script>
+        // 1. Scroll Fade-in Animation
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        fadeElements.forEach(el => observer.observe(el));
+
+        // 2. 메인 히어로 배경용 큐브 (Three.js)
+        function initHeroCube() {
+            const container = document.getElementById('cube-canvas-container');
+            if(!container) return;
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 10);
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const dLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            dLight.position.set(5, 10, 7);
+            scene.add(dLight);
+
+            const cubeMaterials = [
+                new THREE.MeshStandardMaterial({ color: 0xB90000, roughness: 0.2 }),
+                new THREE.MeshStandardMaterial({ color: 0xFF5900, roughness: 0.2 }),
+                new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.2 }),
+                new THREE.MeshStandardMaterial({ color: 0xFFD500, roughness: 0.2 }),
+                new THREE.MeshStandardMaterial({ color: 0x009B48, roughness: 0.2 }),
+                new THREE.MeshStandardMaterial({ color: 0x0045AD, roughness: 0.2 })
+            ];
+            const cubeGeometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x0B0E14, linewidth: 2 });
+
+            const cubeGroup = new THREE.Group();
+            for (let x = -1; x <= 1; x++) {
+                for (let y = -1; y <= 1; y++) {
+                    for (let z = -1; z <= 1; z++) {
+                        const mesh = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                        mesh.position.set(x, y, z);
+                        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(cubeGeometry), edgeMaterial));
+                        cubeGroup.add(mesh);
+                    }
+                }
+            }
+            cubeGroup.rotation.set(Math.PI/6, -Math.PI/4, 0);
+            scene.add(cubeGroup);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cubeGroup.rotation.y += 0.003;
+                cubeGroup.rotation.x += 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // 3. 경우의 수 탭 전환 로직
+        //    (기준 시점 버튼이 플레이어 노드를 교체할 수 있으므로 항상 id로 다시 조회)
+        function setupTabs(stepId) {
+            const tabsContainer = document.getElementById('tabs-' + stepId);
+            if (!tabsContainer) return;
+
+            const tabs = tabsContainer.querySelectorAll('.case-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    const player = document.getElementById('player-' + stepId);
+                    if (player) player.setAttribute('alg', e.currentTarget.getAttribute('data-alg'));
+                    // 선택한 상황에 맞춰 공식 전체 표기도 갱신
+                    const notation = document.getElementById('notation-' + stepId);
+                    if (notation) notation.textContent = e.currentTarget.getAttribute('data-alg');
+                });
+            });
+        }
+
+        // 4. '기준 시점으로' 버튼: 드래그로 돌려본 큐브를 처음 카메라 각도로 되돌림.
+        //    twisty-player는 카메라 속성값이 같으면 재적용해도 반응하지 않으므로,
+        //    현재 속성(선택된 알고리즘 포함)을 그대로 가진 새 노드로 교체해 시점을 초기화한다.
+        function setupResetButtons() {
+            const players = document.querySelectorAll('twisty-player[control-panel="bottom"]');
+            players.forEach((player, i) => {
+                if (!player.id) player.id = 'view-player-' + i;
+                const pid = player.id;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'view-reset-btn';
+                btn.textContent = '🧭 기준 시점으로';
+                btn.addEventListener('click', () => {
+                    const el = document.getElementById(pid);
+                    if (!el) return;
+                    const fresh = el.cloneNode(true); // 현재 alg 등 속성 유지, 카메라만 기준값으로 재초기화
+                    el.replaceWith(fresh);
+                });
+
+                player.parentElement.appendChild(btn);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initHeroCube();
+            setupTabs('step1'); // 흰색 십자가 상황별 탭
+            setupTabs('step1b'); // 십자가 색 맞추기 탭
+            setupTabs('step2'); // 1층 코너 상황별 탭
+            setupTabs('step4'); // 2층 완성 탭
+            setupTabs('step5'); // 노란색 십자가 탭
+            setupTabs('step7'); // 테두리 정렬 탭
+            setupResetButtons(); // 모든 조작용 큐브에 기준 시점 버튼 추가
+        });
+    </script>
+</body>
+</html>
