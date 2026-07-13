@@ -335,9 +335,202 @@
             .section-title { font-size: 2rem; }
             .used-notation-box { flex-direction: column; gap: 5px; }
         }
+
+        /* ==========================================================================
+           Global Navigation Bar
+           ========================================================================== */
+        .site-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 0 32px;
+            background-color: rgba(11, 14, 20, 0.85);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+        }
+
+        /* 고정 네비바에 섹션 제목이 가려지지 않도록 앵커 여백 확보 */
+        html { scroll-behavior: smooth; }
+        section[id] { scroll-margin-top: 80px; }
+
+        /* --- 1. 로고 (좌측) --- */
+        .site-nav .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-decoration: none;
+            white-space: nowrap;
+            letter-spacing: -0.02em;
+        }
+        .site-nav .nav-logo .logo-icon { font-size: 1.4rem; }
+        .site-nav .nav-logo:hover { color: var(--accent-cyan); }
+
+        /* --- 데스크톱: 메뉴 + CTA 가로 정렬 컨테이너 --- */
+        .site-nav .nav-panel {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* --- 2~4. 중앙 탭 메뉴 --- */
+        .site-nav .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .site-nav .nav-link {
+            position: relative;
+            display: block;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .site-nav .nav-link:hover { color: var(--text-main); }
+
+        /* 현재 페이지 강조: 해당 페이지의 <a>에 class="active" 추가 */
+        .site-nav .nav-link.active {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+        .site-nav .nav-link.active::after {
+            content: '';
+            position: absolute;
+            left: 16px; right: 16px; bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+
+        /* --- 5. 우측 강조 CTA 버튼 (Pill) --- */
+        .site-nav .nav-cta {
+            padding: 9px 22px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--bg-color);
+            background-color: var(--accent-cyan);
+            border-radius: 50px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+        }
+        .site-nav .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+        }
+        .site-nav .nav-cta.active {
+            outline: 2px solid var(--text-main);
+            outline-offset: 2px;
+        }
+
+        /* --- 모바일: 햄버거 메뉴 (JS 불필요, 체크박스 방식) --- */
+        .site-nav .nav-toggle-input { display: none; }
+        .site-nav .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            padding: 8px;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .site-nav .nav-toggle .bar {
+            display: block;
+            width: 100%;
+            height: 2px;
+            border-radius: 2px;
+            background-color: var(--text-main);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .site-nav { padding: 0 20px; }
+            .site-nav .nav-toggle { display: flex; }
+
+            .site-nav .nav-panel {
+                position: fixed;
+                top: 64px; left: 0; right: 0;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 12px 20px 24px;
+                background-color: var(--surface-color);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+                visibility: hidden;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            }
+            .site-nav .nav-menu { flex-direction: column; align-items: stretch; gap: 0; }
+            .site-nav .nav-link { padding: 14px 8px; font-size: 1.05rem; border-bottom: 1px solid rgba(160, 170, 181, 0.1); }
+            .site-nav .nav-link.active::after { left: 8px; right: auto; width: 28px; bottom: 8px; }
+            .site-nav .nav-cta { margin-top: 16px; text-align: center; padding: 13px 22px; }
+
+            .site-nav .nav-toggle-input:checked ~ .nav-panel {
+                visibility: visible;
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(2) { opacity: 0; }
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        }
     </style>
 </head>
 <body>
+
+    <nav class="site-nav">
+        <!-- 1. 로고: 클릭 시 최상단 Hero로 -->
+        <a href="#hero" class="nav-logo">
+            <span class="logo-icon">🧊</span>
+            <span>3D 큐브 마스터</span>
+        </a>
+
+        <!-- 모바일 햄버거 토글 -->
+        <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
+
+        <!-- 2~5. 탭 메뉴 + CTA (모바일에서는 접히는 패널) -->
+        <div class="nav-panel">
+            <ul class="nav-menu">
+                <li><a href="#problem-solution" class="nav-link">특징</a></li>
+                <li><a href="#notation" class="nav-link">기호 읽는 법</a></li>
+                <li><a href="#tutorial" class="nav-link">7단계 해법</a></li>
+            </ul>
+            <a href="#cta" class="nav-cta">직접 해보기 🚀</a>
+        </div>
+
+        <label for="nav-toggle-check" class="nav-toggle" aria-label="메뉴 열기">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </label>
+    </nav>
+
+    <script>
+        document.querySelectorAll('.site-nav .nav-panel a').forEach(function (a) {
+            a.addEventListener('click', function () {
+                document.getElementById('nav-toggle-check').checked = false;
+            });
+        });
+    </script>
 
     <section id="hero">
         <div id="cube-canvas-container"></div>

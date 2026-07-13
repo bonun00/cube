@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네비게이션 바 컴포넌트 — 3D 큐브 마스터</title>
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <style>
+        /* 데모 페이지용 기본 스타일 (복사 불필요) */
+        :root {
+            --bg-color: #0B0E14;
+            --surface-color: #161B25;
+            --text-main: #F8F9FA;
+            --text-muted: #A0AAB5;
+            --accent-cyan: #00F0FF;
+            --accent-yellow: #FFDE00;
+            --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: var(--font-family); }
+        section { height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 2rem; border-bottom: 1px dashed #2A3140; }
+    </style>
+
+    <!-- ================================================================
+         ▼▼▼ 여기부터 복사 (CSS) — 각 페이지 <head> 안에 붙여넣기 ▼▼▼
+         (:root 변수가 이미 있는 페이지라면 아래 .site-nav 관련 규칙만 필요)
+         ================================================================ -->
+    <style>
+        /* ==========================================================================
+           Global Navigation Bar
+           ========================================================================== */
+        .site-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 0 32px;
+            background-color: rgba(11, 14, 20, 0.85); /* --bg-color 반투명 */
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+        }
+
+        /* 고정 네비바에 섹션 제목이 가려지지 않도록 앵커 여백 확보 */
+        html { scroll-behavior: smooth; }
+        section[id] { scroll-margin-top: 80px; }
+
+        /* --- 1. 로고 (좌측) --- */
+        .site-nav .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-decoration: none;
+            white-space: nowrap;
+            letter-spacing: -0.02em;
+        }
+        .site-nav .nav-logo .logo-icon { font-size: 1.4rem; }
+        .site-nav .nav-logo:hover { color: var(--accent-cyan); }
+
+        /* --- 데스크톱: 메뉴 + CTA 가로 정렬 컨테이너 --- */
+        .site-nav .nav-panel {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* --- 2~4. 중앙 탭 메뉴 --- */
+        .site-nav .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .site-nav .nav-link {
+            position: relative;
+            display: block;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .site-nav .nav-link:hover { color: var(--text-main); }
+
+        /* 현재 페이지 강조: 해당 페이지의 <a>에 class="active" 추가 */
+        .site-nav .nav-link.active {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+        .site-nav .nav-link.active::after {
+            content: '';
+            position: absolute;
+            left: 16px; right: 16px; bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+
+        /* --- 5. 우측 강조 CTA 버튼 (Pill) --- */
+        .site-nav .nav-cta {
+            padding: 9px 22px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--bg-color);
+            background-color: var(--accent-cyan);
+            border-radius: 50px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+        }
+        .site-nav .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+        }
+        /* CTA가 현재 페이지일 때 */
+        .site-nav .nav-cta.active {
+            outline: 2px solid var(--text-main);
+            outline-offset: 2px;
+        }
+
+        /* --- 모바일: 햄버거 메뉴 (JS 불필요, 체크박스 방식) --- */
+        .site-nav .nav-toggle-input { display: none; }
+        .site-nav .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            padding: 8px;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .site-nav .nav-toggle .bar {
+            display: block;
+            width: 100%;
+            height: 2px;
+            border-radius: 2px;
+            background-color: var(--text-main);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .site-nav { padding: 0 20px; }
+            .site-nav .nav-toggle { display: flex; }
+
+            /* 메뉴 + CTA를 상단에서 내려오는 패널로 전환 */
+            .site-nav .nav-panel {
+                position: fixed;
+                top: 64px; left: 0; right: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px 20px 24px;
+                background-color: var(--surface-color);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+                /* 접힌 상태 */
+                visibility: hidden;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            }
+            .site-nav .nav-menu { flex-direction: column; align-items: stretch; gap: 0; }
+            .site-nav .nav-link { padding: 14px 8px; font-size: 1.05rem; border-bottom: 1px solid rgba(160, 170, 181, 0.1); }
+            .site-nav .nav-link.active::after { left: 8px; right: auto; width: 28px; bottom: 8px; }
+            .site-nav .nav-cta { margin-top: 16px; text-align: center; padding: 13px 22px; }
+
+            /* 체크박스가 켜지면 패널 펼침 */
+            .site-nav .nav-toggle-input:checked ~ .nav-panel {
+                visibility: visible;
+                opacity: 1;
+                transform: translateY(0);
+            }
+            /* 햄버거 → X 아이콘 전환 */
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(2) { opacity: 0; }
+            .site-nav .nav-toggle-input:checked ~ .nav-toggle .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        }
+    </style>
+    <!-- ▲▲▲ CSS 복사 끝 ▲▲▲ -->
+</head>
+<body>
+
+    <!-- ================================================================
+         ▼▼▼ 여기부터 복사 (HTML) — 각 페이지 <body> 맨 위에 붙여넣기 ▼▼▼
+
+         [현재 페이지 강조]
+         페이지마다 해당하는 <a> 태그에 class에 "active"를 추가하세요.
+         예) 기호 가이드 페이지라면:
+             <a href="#notation" class="nav-link active">기호 읽는 법</a>
+
+         [다른 페이지로 분리할 경우]
+         href를 "index.html#notation" 처럼 파일명 포함 경로로 바꾸면 됩니다.
+         ================================================================ -->
+    <nav class="site-nav">
+        <!-- 1. 로고: 클릭 시 최상단 Hero로 -->
+        <a href="#hero" class="nav-logo">
+            <span class="logo-icon">🧊</span>
+            <span>3D 큐브 마스터</span>
+        </a>
+
+        <!-- 모바일 햄버거 토글 (label이 아래 checkbox를 제어) -->
+        <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
+
+        <!-- 2~5. 탭 메뉴 + CTA (모바일에서는 접히는 패널) -->
+        <div class="nav-panel">
+            <ul class="nav-menu">
+                <li><a href="#problem-solution" class="nav-link">특징</a></li>
+                <li><a href="#notation" class="nav-link">기호 읽는 법</a></li>
+                <li><a href="#tutorial" class="nav-link active">7단계 해법</a></li>
+            </ul>
+            <a href="#cta" class="nav-cta">직접 해보기 🚀</a>
+        </div>
+
+        <label for="nav-toggle-check" class="nav-toggle" aria-label="메뉴 열기">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </label>
+    </nav>
+
+    <!-- (선택) 모바일에서 링크 클릭 시 패널 자동 닫기 — 3줄 스크립트.
+         순수 HTML+CSS만 원하면 이 블록은 빼도 동작합니다. -->
+    <script>
+        document.querySelectorAll('.site-nav .nav-panel a').forEach(function (a) {
+            a.addEventListener('click', function () {
+                document.getElementById('nav-toggle-check').checked = false;
+            });
+        });
+    </script>
+    <!-- ▲▲▲ HTML 복사 끝 ▲▲▲ -->
+
+
+    <!-- 아래는 앵커 이동 확인용 데모 섹션 (복사 불필요) -->
+    <section id="hero">#hero — Hero 섹션</section>
+    <section id="problem-solution">#problem-solution — 특징</section>
+    <section id="notation">#notation — 기호 가이드</section>
+    <section id="tutorial">#tutorial — 7단계 해법</section>
+    <section id="cta">#cta — 플레이그라운드 CTA</section>
+
+</body>
+</html>

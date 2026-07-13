@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7단계 해법 · 3D 큐브 마스터 가이드</title>
+
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script type="module" src="https://cdn.cubing.net/js/cubing/twisty"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <nav class="site-nav">
+        <a href="index.html" class="nav-logo">
+            <span class="logo-icon">🧊</span>
+            <span>3D 큐브 마스터</span>
+        </a>
+        <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
+        <div class="nav-panel">
+            <ul class="nav-menu">
+                <li><a href="notation.html" class="nav-link">기호 읽는 법</a></li>
+                <li><a href="tutorial.html" class="nav-link active">7단계 해법</a></li>
+            </ul>
+            <a href="playground.html" class="nav-cta">직접 해보기 🚀</a>
+        </div>
+        <label for="nav-toggle-check" class="nav-toggle" aria-label="메뉴 열기">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </label>
+    </nav>
+
+<section id="tutorial" class="fade-in">
+    <h2 class="section-title">정석 레이어 해법 7단계 가이드</h2>
+    <p class="section-desc">아래층부터 차곡차곡 쌓아 올리는 방식입니다. Step 1~2에서는 <strong>흰색 센터를 위로</strong> 들고 십자가를 만들고, Step 3부터는 큐브를 뒤집어 <strong>흰색 면을 바닥에</strong> 두고 진행합니다.<br>내 큐브와 같은 상황을 골라 재생 버튼(▶)을 눌러 따라 해보세요. 공식이 한 번에 안 통해도 괜찮습니다 — 대부분 같은 공식을 반복하면 맞춰지게 되어 있습니다.</p>
+
+    <div class="step-container">
+
+        <!-- STEP 1 : 흰색 십자가 (흰색 센터를 위로 들고 흰 엣지 모으기) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 1</span>
+                <h3 class="step-title">흰색 십자가 만들기</h3>
+                <p class="step-desc"><strong>흰색 센터를 위로</strong> 든 채, 흰색 센터 주변으로 하얀색 엣지 4개를 올려 십자가 모양을 만듭니다. (옆면 색은 아직 안 맞아도 됩니다 — 다음 단계에서 맞춥니다.) 흰 엣지가 지금 <strong>어디에 있느냐</strong>에 따라 올리는 방법이 다르니 아래 상황을 골라보세요. 올리려는 윗면 자리가 이미 다른 흰 엣지로 차 있다면, 윗면(U)을 돌려 빈자리를 그 위로 가져온 뒤 공식을 쓰면 됩니다.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step1">
+                <button class="case-tab active" data-alg="F2">상황 1: 흰 엣지가 바닥에 있을 때</button>
+                <button class="case-tab" data-alg="R">상황 2: 흰 엣지가 중간층 옆에 꽂혔을 때</button>
+                <button class="case-tab" data-alg="F U' R U">상황 3: 흰 엣지가 위에 있지만 뒤집혔을 때</button>
+                <button class="case-tab" data-alg="F R' D' R F2">종합 예시: 섞인 상태에서 모으기</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step1" puzzle="3x3x3" alg="F2"
+                        experimental-setup-alg="F2 D R2 D' F2" experimental-setup-anchor="end"
+                        experimental-stickering="Daisy" background="none" control-panel="bottom"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step1">F2</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (윗면 흰 십자가)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="F2 D R2 D' F2"
+                        experimental-stickering="Daisy" background="none" control-panel="none"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- STEP 2 : 십자가 색 맞추기 (옆면 색을 센터와 정렬) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 2</span>
+                <h3 class="step-title">십자가 색 맞추기 (센터와 정렬)</h3>
+                <p class="step-desc">윗면 십자가는 모양만으로는 부족합니다 — 각 흰 엣지의 <strong>옆면 색이 같은 색 센터와 일치</strong>해야 진짜 완성입니다. 색을 안 맞추고 넘어가면 다음 단계가 전부 어긋나요. 먼저 윗면(U)을 돌려 최대한 많은 엣지를 맞춰보세요. 그래도 서로 자리가 바뀐 엣지가 있다면, 교환할 두 엣지가 <strong>앞/오른쪽(이웃)</strong> 또는 <strong>앞/뒤(마주 봄)</strong>에 오도록 큐브를 잡고 아래 교환 공식을 쓰세요. 네 방향이 모두 맞으면 <strong>큐브를 통째로 뒤집어</strong> 흰 십자가를 바닥으로 — 다음 단계 준비 완료!</p>
+            </div>
+            <div class="case-tabs" id="tabs-step1b">
+                <button class="case-tab active" data-alg="U">상황 1: U만 돌려도 맞을 때 (기준 정렬)</button>
+                <button class="case-tab" data-alg="F2 D R2 D' F2">상황 2: 이웃한 엣지 두 개가 서로 바뀌었을 때</button>
+                <button class="case-tab" data-alg="F2 D2 B2 D2 F2">상황 3: 마주 보는 엣지 두 개가 서로 바뀌었을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step1b" puzzle="3x3x3" alg="U" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:IIIIIIII,CENTERS:------"
+                        background="none" control-panel="bottom"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step1b">U</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (옆면 색 일치)</span>
+                    <twisty-player puzzle="3x3x3"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:IIIIIIII,CENTERS:------"
+                        background="none" control-panel="none"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3 : 1층 완성 (흰 코너) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 3</span>
+                <h3 class="step-title">1층 완성 (코너 넣기)</h3>
+                <p class="step-desc">하얀색을 포함한 코너 조각을 바닥 제자리에 넣어 흰색 면 전체를 완성합니다. 먼저 윗층에서 흰색이 들어간 코너를 찾고, U를 돌려 <strong>그 코너가 들어갈 자리 바로 위</strong>(코너의 옆면 두 색과 같은 센터 사이)에 놓으세요. 그 다음 <strong>흰 스티커가 향하는 방향</strong>에 따라 공식을 고르면 됩니다. 한 번에 안 들어가면 같은 공식을 반복하세요.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step2">
+                <button class="case-tab active" data-alg="R U R'">상황 1: 흰색이 옆(오른쪽)을 향할 때</button>
+                <button class="case-tab" data-alg="F' U' F">상황 2: 흰색이 앞을 향할 때</button>
+                <button class="case-tab" data-alg="R U2 R' U' R U R'">상황 3: 흰색이 위를 향할 때</button>
+                <button class="case-tab" data-alg="R U R' U' R U R'">예외: 코너가 자리에 뒤집혀 박혔을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (바닥 시점 ▶)</span>
+                    <twisty-player id="player-step2" puzzle="3x3x3" alg="R U R'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:----IIII,CENTERS:-IIIII"
+                        background="none" control-panel="bottom" camera-latitude="-34"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step2">R U R'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (흰 1층 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:----IIIIIIII,CORNERS:----IIII,CENTERS:-IIIII"
+                        background="none" control-panel="none" camera-latitude="-34"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4 : 2층 완성 -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 4</span>
+                <h3 class="step-title">2층 완성 (엣지 이동)</h3>
+                <p class="step-desc">맨 윗층에서 <strong>노란색이 없는 엣지</strong>를 찾으세요. U를 돌려 그 엣지의 앞면 색을 같은 색 센터와 맞추면 거꾸로 된 T(⊤) 모양이 됩니다. 이제 엣지의 <strong>윗면 스티커 색</strong>을 확인하세요 — 오른쪽 센터 색과 같으면 '오른쪽으로', 왼쪽 센터 색과 같으면 '왼쪽으로' 밀어 넣으면 됩니다.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step4">
+                <button class="case-tab active" data-alg="U R U' R' U' F' U F">상황 1: 오른쪽으로 밀어 넣기</button>
+                <button class="case-tab" data-alg="U' L' U L U F U' F'">상황 2: 왼쪽으로 밀어 넣기</button>
+                <button class="case-tab" data-alg="R U' R' U F' U F U' R U R'">예외: 제자리에서 뒤집혔을 때</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (직접 재생 ▶)</span>
+                    <twisty-player id="player-step4" puzzle="3x3x3" alg="U R U' R' U' F' U F"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:----IIII----,CORNERS:----IIII,CENTERS:-----I"
+                        background="none" control-panel="bottom" camera-latitude="-25"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step4">U R U' R' U' F' U F</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (2층까지 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:----IIII----,CORNERS:----IIII,CENTERS:-----I"
+                        background="none" control-panel="none" camera-latitude="-25"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5 : 노란 십자가 -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 5</span>
+                <h3 class="step-title">노란색 십자가 만들기</h3>
+                <p class="step-desc">이제 윗면(노란색)을 봅니다. 윗면 엣지가 만드는 노란색 모양(점 •, ㄱ자, 일자 ―)을 확인하세요. <strong>잡는 방향이 중요합니다:</strong> 일자형은 가로(좌↔우)가 되게, ㄱ자형은 꺾인 부분이 왼쪽 뒤(9시~12시 방향)를 향하게 잡은 뒤 공식을 돌리세요. 점 모양은 공식을 돌리면 ㄱ자가 되고, 이어서 반복하면 십자가가 됩니다. 아래 두 층은 공식이 끝나면 원래대로 돌아오니 걱정하지 마세요.</p>
+            </div>
+            <div class="case-tabs" id="tabs-step5">
+                <button class="case-tab active" data-alg="F R U R' U' F'">모양 1: 일자형 ( - )</button>
+                <button class="case-tab" data-alg="Fw R U R' U' Fw'">모양 2: 기역자형 ( ㄱ )</button>
+                <button class="case-tab" data-alg="F R U R' U' F' U2 Fw R U R' U' Fw'">모양 3: 점 ( • )</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player id="player-step5" puzzle="3x3x3" alg="F R U R' U' F'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        experimental-stickering-mask-orbits="EDGES:------------,CORNERS:----IIII,CENTERS:------"
+                        background="none" control-panel="bottom" camera-latitude="34"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step5">F R U R' U' F'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (노란 십자가)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        experimental-stickering-mask-orbits="EDGES:------------,CORNERS:----IIII,CENTERS:------"
+                        background="none" control-panel="none" camera-latitude="34"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 6 : 노란 면 완성 (OLL) -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge">Step 6</span>
+                <h3 class="step-title">노란색 윗면 완성</h3>
+                <p class="step-desc">코너 조각들의 방향을 뒤집어 윗면 전체를 노란색으로 만듭니다. 윗면에 <strong>노란 코너가 딱 1개</strong>만 있으면 '물고기 모양'입니다 — 그 노란 코너가 <strong>왼쪽 앞</strong>(물고기 머리가 나를 향하게)에 오도록 잡고 공식을 돌리세요. 물고기 모양이 아니라면 아무 방향으로나 잡고 공식을 한 번 돌리면 물고기가 나타납니다. 윗면이 전부 노란색이 될 때까지 반복하세요.</p>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player puzzle="3x3x3" alg="R U R' U R U2 R'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        background="none" control-panel="bottom" camera-latitude="50"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 단계에서 사용하는 공식:</span>
+                        <strong>R U R' U R U2 R'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">목표 형태 (노란 면 완성)</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        background="none" control-panel="none" camera-latitude="50"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL : PLL -->
+        <div class="step-block fade-in">
+            <div class="step-info">
+                <span class="step-badge" style="background-color: var(--accent-cyan); color: var(--bg-color);">Final Step</span>
+                <h3 class="step-title">마지막 테두리 정렬 (PLL)</h3>
+                <p class="step-desc"><strong>순서 1:</strong> 옆면 맨 윗줄의 양끝 코너 색이 같은 면('헤드라이트')을 찾아 <strong>뒤쪽으로 보낸 뒤</strong> 공식을 돌리면 코너 4개의 위치가 맞습니다. 헤드라이트가 하나도 없으면 아무 방향으로나 공식을 한 번 돌리면 생깁니다. <strong>순서 2:</strong> 코너가 다 맞으면 색이 완전히 맞은 한 면을 <strong>뒤쪽에 두고</strong> 엣지 공식을 돌리세요. 한 번에 안 되면 한 번 더 — 그러면 완성입니다! 🎉</p>
+            </div>
+            <div class="case-tabs" id="tabs-step7">
+                <button class="case-tab active" data-alg="R U R' U' R' F R2 U' R' U' R U R' F'">순서 1: 코너 맞추기 (헤드라이트)</button>
+                <button class="case-tab" data-alg="R U' R U R U R U' R' U' R2">순서 2: 엣지 3개 돌리기 (최종 완성)</button>
+            </div>
+            <div class="cube-comparison">
+                <div class="cube-box">
+                    <span class="cube-label">시작 형태 (윗면 시점 ▶)</span>
+                    <twisty-player id="player-step7" puzzle="3x3x3" alg="R U R' U' R' F R2 U' R' U' R U R' F'"
+                        experimental-setup-alg="x2" experimental-setup-anchor="end"
+                        background="none" control-panel="bottom" camera-latitude="25"></twisty-player>
+                    <div class="used-notation-box">
+                        <span>이 상황에서 사용하는 공식:</span>
+                        <strong id="notation-step7">R U R' U' R' F R2 U' R' U' R U R' F'</strong>
+                    </div>
+                </div>
+                <div class="cube-arrow">➔</div>
+                <div class="cube-box goal-box">
+                    <span class="cube-label">완성된 형태 🎉</span>
+                    <twisty-player puzzle="3x3x3" experimental-setup-alg="x2"
+                        background="none" control-panel="none" camera-latitude="25"></twisty-player>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="hero-actions">
+        <a href="playground.html" class="cta-button">직접 해보기 🚀</a>
+        <a href="notation.html" class="ghost-button">기호표 다시 보기</a>
+    </div>
+</section>
+
+    <div class="spacer"></div>
+
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 큐브 마스터 가이드</title>
+
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <nav class="site-nav">
+        <a href="index.html" class="nav-logo">
+            <span class="logo-icon">🧊</span>
+            <span>3D 큐브 마스터</span>
+        </a>
+        <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
+        <div class="nav-panel">
+            <ul class="nav-menu">
+                <li><a href="notation.html" class="nav-link">기호 읽는 법</a></li>
+                <li><a href="tutorial.html" class="nav-link">7단계 해법</a></li>
+            </ul>
+            <a href="playground.html" class="nav-cta">직접 해보기 🚀</a>
+        </div>
+        <label for="nav-toggle-check" class="nav-toggle" aria-label="메뉴 열기">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </label>
+    </nav>
+
+    <section id="hero">
+        <div id="cube-canvas-container"></div>
+        <div class="hero-content fade-in">
+            <h1 class="hero-title">돌리다 보면 풀린다!<br><span class="highlight-cyan">3D로 배우는 가장 직관적인</span> 큐브 마스터 가이드</h1>
+            <p class="hero-subtitle">더 이상 복잡한 기호와 텍스트 공식에 좌절하지 마세요.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="tutorial.html" class="cta-button">7단계 해법 시작하기 →</a>
+            <a href="notation.html" class="ghost-button">기호부터 익히기</a>
+        </div>
+    </section>
+
+    <script src="main.js"></script>
+</body>
+</html>

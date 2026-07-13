@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기호 읽는 법 · 3D 큐브 마스터 가이드</title>
+
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <nav class="site-nav">
+        <a href="index.html" class="nav-logo">
+            <span class="logo-icon">🧊</span>
+            <span>3D 큐브 마스터</span>
+        </a>
+        <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
+        <div class="nav-panel">
+            <ul class="nav-menu">
+                <li><a href="notation.html" class="nav-link active">기호 읽는 법</a></li>
+                <li><a href="tutorial.html" class="nav-link">7단계 해법</a></li>
+            </ul>
+            <a href="playground.html" class="nav-cta">직접 해보기 🚀</a>
+        </div>
+        <label for="nav-toggle-check" class="nav-toggle" aria-label="메뉴 열기">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </label>
+    </nav>
+
+    <section id="notation" class="standalone-page fade-in">
+        <div class="notation-container">
+            <h2 class="section-title" style="margin-bottom: 10px;">사전 지식: 큐브 회전 기호 읽는 법</h2>
+            <p class="section-desc">공식에 등장하는 알파벳은 <strong>해당 면(Face)을 시계 방향으로 90도 돌리라는 뜻</strong>입니다.<br>기호의 원리만 살짝 알면 튜토리얼을 200% 더 쉽게 이해할 수 있습니다.</p>
+
+            <h3 style="margin-top: 60px; font-size: 1.3rem; color: var(--accent-cyan);">① 조각의 이름부터 알아두세요</h3>
+            <div class="notation-grid" style="margin-top: 20px;">
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">센터</div><div class="notation-desc">각 면 정중앙의 <strong>1색</strong> 조각 (6개)<br>절대 움직이지 않아서<br>그 면의 <strong>색 기준</strong>이 됩니다</div></div>
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">엣지</div><div class="notation-desc">모서리 가운데의 <strong>2색</strong> 조각 (12개)<br>십자가를 만들 때<br>움직이는 주인공입니다</div></div>
+                <div class="notation-item"><div class="notation-letter" style="font-size: 1.5rem;">코너</div><div class="notation-desc">꼭짓점의 <strong>3색</strong> 조각 (8개)<br>층을 완성할 때<br>마지막으로 끼워 넣습니다</div></div>
+            </div>
+
+            <h3 style="margin-top: 40px; font-size: 1.3rem; color: var(--accent-cyan);">② 회전 기호 6가지</h3>
+            <div class="notation-grid">
+                <div class="notation-item"><div class="notation-letter">R</div><div class="notation-desc">Right<br>(오른쪽 면)</div></div>
+                <div class="notation-item"><div class="notation-letter">L</div><div class="notation-desc">Left<br>(왼쪽 면)</div></div>
+                <div class="notation-item"><div class="notation-letter">U</div><div class="notation-desc">Up<br>(윗면)</div></div>
+                <div class="notation-item"><div class="notation-letter">D</div><div class="notation-desc">Down<br>(아랫면)</div></div>
+                <div class="notation-item"><div class="notation-letter">F</div><div class="notation-desc">Front<br>(앞면)</div></div>
+                <div class="notation-item"><div class="notation-letter">B</div><div class="notation-desc">Back<br>(뒷면)</div></div>
+            </div>
+
+            <div class="notation-rule-box">
+                <p>💡 <strong>기본 규칙 (시계 방향 기준):</strong> 해당 면을 <strong>정면으로 바라봤을 때</strong>를 기준으로 시계 방향으로 90도 회전합니다.</p>
+                <p>🔄 <strong>' (프라임) 기호:</strong> 알파벳 뒤에 작은따옴표(')가 붙으면(예: <strong>U'</strong>) <strong>반시계 방향</strong>으로 90도 돌리라는 뜻입니다.</p>
+                <p>✌️ <strong>2 기호:</strong> 알파벳 뒤에 숫자 2가 붙으면(예: <strong>F2</strong>) 시계/반시계 상관없이 <strong>180도(두 번)</strong> 돌리라는 뜻입니다.</p>
+                <p>🧱 <strong>소문자 (w) 기호:</strong> Fw 또는 f 처럼 쓰이면, 앞면 한 줄이 아니라 <strong>앞의 두 줄을 한꺼번에 잡고</strong> 돌리라는 뜻입니다.</p>
+            </div>
+
+            <div class="hero-actions">
+                <a href="tutorial.html" class="cta-button">이제 7단계 해법 시작 →</a>
+            </div>
+        </div>
+    </section>
+
+    <script src="main.js"></script>
+</body>
+</html>
