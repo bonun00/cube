@@ -299,9 +299,37 @@
         }
         .alg-msg { font-size: 0.82rem; color: var(--text-muted); word-break: keep-all; }
 
-        @media (max-width: 900px) {
-            .pg-mobile-note { display: block; }
+        /* ===== 폰용 기호 버튼 =====
+           손가락이 주 입력인 기기(pointer: coarse)에선 화면 키보드 대신 이걸 보여준다(아래 @media).
+           누르면 기다림 없이 바로 돈다. 기호 배치의 0.7초 대기는 키보드로 R 다음 ' 를 칠 때를
+           위한 것이라 손가락엔 느리게만 느껴진다. 180°는 같은 버튼 두 번. */
+        .pg-touchpad {
+            display: none;
+            width: 100%;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
         }
+        .pg-touchpad summary {
+            cursor: pointer; padding: 13px 16px;
+            font-weight: 700; font-size: 0.92rem; color: var(--accent-cyan);
+        }
+        .tp-grid {
+            display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+            padding: 0 12px 14px;
+        }
+        .tp-key {
+            min-height: 48px;                   /* 손가락으로 누르기 좋은 높이 */
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.18); border-bottom-width: 2px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: monospace; font-weight: 700; font-size: 1.05rem;
+            touch-action: manipulation;         /* 빠르게 두 번 눌러도 확대되지 않게 */
+            cursor: pointer;
+        }
+        .tp-key:active { background-color: var(--accent-cyan); color: var(--bg-color); border-color: var(--accent-cyan); }
+        .tp-key.prime { color: var(--accent-yellow); }
 
         /* ===== 넓은 화면: 화면 키보드를 큐브 양옆으로 =====
            키를 치면서 큐브와 키 반짝임을 한눈에 보게 한다. 큐브 크기는 세로(최대 600)가
@@ -363,6 +391,29 @@
             .kg-view [data-act="viewreset"]   { grid-column: 1 / 3; grid-row: 4; }
             .kg-view [data-face="y"]          { grid-column: 3; grid-row: 4; }
         }
+
+        /* ===== 손가락이 주 입력인 기기 (폰·태블릿) =====
+           실제 키보드가 없으니 손 배치·방향키·Enter/Esc 가 쓸모없고, 되돌리기·리셋은 아래
+           버튼에 이미 있다. 화면 키보드를 통째로 숨기고 기호 버튼만 둔다.
+           화면 폭이 아니라 입력 방식으로 나눈다 — 폭으로 나누면 좁은 창의 노트북에서 키보드가 사라진다. */
+        @media (pointer: coarse) {
+            .pg-kb, .pg-kb .kb-panel { display: none !important; }
+            .pg-touchpad { display: block; }
+            .pg-mobile-note { display: block; }
+        }
+        /* 큰 태블릿 가로 화면: 양옆 판 자리는 비고, 기호 버튼은 큐브 바로 아래 줄 */
+        @media (pointer: coarse) and (min-width: 1080px) {
+            .pg-wrap {
+                grid-template-areas:
+                    "left cube    right"
+                    ".    touch   ."
+                    ".    bar     ."
+                    ".    io      ."
+                    ".    status  ."
+                    ".    session .";
+            }
+            .pg-touchpad { grid-area: touch; }
+        }
         @media (max-width: 480px) {
             /* 폭이 큐브 크기를 정하므로 세로는 정사각형이면 충분하다 */
             .pg-cube { height: auto; aspect-ratio: 1 / 1; }
@@ -399,7 +450,7 @@
 
         <div class="pg-wrap">
             <p class="pg-mobile-note">
-                📱 <strong>큐브를 손가락으로 끌어서</strong> 돌리면 됩니다. 아래 화면 키보드로도 돼요.
+                📱 <strong>큐브를 손가락으로 끌어서</strong> 돌리면 됩니다. 아래 기호 버튼으로도 돼요.
             </p>
 
             <div id="pg-cube" class="pg-cube" tabindex="0"
@@ -413,6 +464,25 @@
                     background="none"></twisty-player>
                 <div id="pg-loading" class="pg-loading">3D 큐브 불러오는 중…</div>
             </div>
+
+            <!-- 폰용 기호 버튼: 손가락 기기에서만 큐브 바로 아래에 보이고, 화면 키보드는 숨는다 -->
+            <details class="pg-touchpad" id="pg-touchpad" open>
+                <summary>⌨ 기호로 돌리기</summary>
+                <div class="tp-grid">
+                    <button type="button" class="tp-key" data-tap="R">R</button>
+                    <button type="button" class="tp-key" data-tap="U">U</button>
+                    <button type="button" class="tp-key" data-tap="F">F</button>
+                    <button type="button" class="tp-key" data-tap="L">L</button>
+                    <button type="button" class="tp-key" data-tap="D">D</button>
+                    <button type="button" class="tp-key" data-tap="B">B</button>
+                    <button type="button" class="tp-key prime" data-tap="R'">R'</button>
+                    <button type="button" class="tp-key prime" data-tap="U'">U'</button>
+                    <button type="button" class="tp-key prime" data-tap="F'">F'</button>
+                    <button type="button" class="tp-key prime" data-tap="L'">L'</button>
+                    <button type="button" class="tp-key prime" data-tap="D'">D'</button>
+                    <button type="button" class="tp-key prime" data-tap="B'">B'</button>
+                </div>
+            </details>
 
             <div class="pg-viewbar">
                 <button type="button" id="pg-view-reset" disabled>🧭 기준 시점</button>
@@ -1297,6 +1367,15 @@
         wire(btnReset,    () => { clearPending(); resetToSolved(); });
         wire(btnViewReset, () => { stopAllSpin(); tweenToDefault(); });
         wire(btnDragTurn, () => setDragTurn(!dragTurn));
+
+        // 폰용 기호 버튼: 누르는 즉시 한 수. 글자는 키보드와 같이 화면 기준이다.
+        document.querySelectorAll('#pg-touchpad [data-tap]').forEach(btn => {
+            wire(btn, () => {
+                const tap = btn.dataset.tap;
+                clearPending();
+                doMove(screenToCube(tap[0]) + tap.slice(1));
+            });
+        });
 
         // =====================================================================
         //  공식 서랍 (보기만)
