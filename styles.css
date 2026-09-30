@@ -437,9 +437,52 @@ twisty-player { width: 100%; height: 300px; background-color: transparent; }
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
 }
-.site-nav .nav-cta.active {
-    outline: 2px solid var(--text-main);
-    outline-offset: 2px;
+/* "직접 해보기" 버튼 테두리를 따라 빛 한 줄기가 돈다.
+   각도를 애니메이션하려면 @property 로 타입을 알려줘야 한다(없는 브라우저에선 빛이 멈춰 있을 뿐). */
+@property --cta-glow-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+.site-nav .nav-cta { position: relative; }
+/* 선: 버튼 가장자리 위를 도는 얇은 빛. 머리는 밝고 꼬리는 길게 흐려진다 */
+.site-nav .nav-cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;                                /* 빛이 지나가는 테두리 두께 */
+    background: conic-gradient(from var(--cta-glow-angle),
+        transparent 0deg 190deg,
+        rgba(255, 255, 255, 0.25) 300deg,
+        rgba(255, 255, 255, 0.95) 350deg,
+        transparent 360deg);
+    /* 가운데는 비우고 테두리 띠만 남긴다 */
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: cta-glow-spin 4.5s linear infinite;
+    pointer-events: none;
+}
+/* 번짐: 같은 빛을 흐리게 버튼 뒤에 깔아, 빛이 지나가는 쪽 가장자리가 은은하게 새어 나온다 */
+.site-nav .nav-cta::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: inherit;
+    background: conic-gradient(from var(--cta-glow-angle),
+        transparent 0deg 270deg,
+        rgba(190, 250, 255, 0.55) 345deg,
+        transparent 360deg);
+    filter: blur(7px);
+    z-index: -1;
+    animation: cta-glow-spin 4.5s linear infinite;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+/* 떠오르는 hover 에선 transform 때문에 번짐이 버튼 위로 올라오므로 잠깐 감춘다 */
+.site-nav .nav-cta:hover::after { opacity: 0; }
+@keyframes cta-glow-spin { to { --cta-glow-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+    .site-nav .nav-cta::before, .site-nav .nav-cta::after { animation: none; }
 }
 
 /* --- 모바일: 햄버거 메뉴 (JS 불필요, 체크박스 방식) --- */
