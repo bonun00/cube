@@ -173,13 +173,30 @@
         .rk-list li:nth-child(odd) { background-color: rgba(255, 255, 255, 0.03); }
         .rk-list li.me { background-color: rgba(0, 240, 255, 0.12); }
         .rk-list .no { font-family: monospace; color: var(--text-muted); text-align: right; }
-        .rk-list li:nth-child(1) .no { color: #ffd500; }
-        .rk-list li:nth-child(2) .no { color: #cfd6e4; }
-        .rk-list li:nth-child(3) .no { color: #ff9f4a; }
+        .rk-list .no.r1 { color: #ffd500; }
+        .rk-list .no.r2 { color: #cfd6e4; }
+        .rk-list .no.r3 { color: #ff9f4a; }
         .rk-list .nm { color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .rk-list .tm { font-family: monospace; font-weight: 700; color: var(--accent-cyan); }
         .rk-list .mv { font-size: 0.78rem; color: var(--text-muted); }
         .rk-list .rk-empty { display: block; color: var(--text-muted); text-align: center; background: none; }
+        /* 순위표 페이지 넘기기 (한 페이지 PAGE_SIZE 명) */
+        .rk-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+        .rk-pager[hidden] { display: none; }
+        .rk-pager button {
+            background: none; color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+            padding: 4px 12px; font-size: 0.8rem; cursor: pointer; font-family: var(--font-family);
+        }
+        .rk-pager button:hover:not(:disabled) { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .rk-pager button:disabled { opacity: 0.3; cursor: default; }
+        .rk-page { font-family: monospace; font-size: 0.85rem; color: var(--text-muted); min-width: 4.5em; text-align: center; }
+        .pf-jump {
+            margin-top: 6px; background: none; border: none; padding: 0;
+            color: var(--accent-cyan); font-family: var(--font-family); font-size: 0.78rem; cursor: pointer;
+        }
+        .pf-jump:hover { text-decoration: underline; }
+        .pf-jump[hidden] { display: none; }
         @media (prefers-reduced-motion: reduce) {
             .pg-solved { animation: none; }
         }
@@ -767,6 +784,7 @@
                     <button type="button" class="pf-cancel" id="pf-cancel">취소</button>
                 </form>
                 <div class="pf-stats" id="pf-stats"></div>
+                <button type="button" class="pf-jump" id="pf-jump" hidden>내 순위 보기 ›</button>
             </div>
 
             <p class="rk-desc">도전할 때마다 새로 섞어요. 여러 번 도전할 수 있고, 가장 빠른 기록이 역대 순위에 남아요.</p>
@@ -776,6 +794,11 @@
             <div class="rk-status" id="rk-status" aria-live="polite"></div>
             <h4 class="rk-sub">역대 순위</h4>
             <ol class="rk-list" id="rk-list"></ol>
+            <div class="rk-pager" id="rk-pager" hidden>
+                <button type="button" id="rk-prev" aria-label="이전 페이지">◀</button>
+                <span class="rk-page" id="rk-page"></span>
+                <button type="button" id="rk-next" aria-label="다음 페이지">▶</button>
+            </div>
         </div>
     </aside>
 
@@ -1785,9 +1808,18 @@
         const pfForm = document.getElementById('pf-form');
         const pfInput = document.getElementById('pf-input');
         const pfStats = document.getElementById('pf-stats');
+        const pfJump = document.getElementById('pf-jump');
+        const rkPager = document.getElementById('rk-pager');
+        const rkPrev = document.getElementById('rk-prev');
+        const rkNext = document.getElementById('rk-next');
+        const rkPage = document.getElementById('rk-page');
         const timerEl = document.getElementById('pg-timer');
+        const PAGE_SIZE = 10;     // 순위표 한 페이지 인원 (280px 서랍에 스크롤 없이 들어가는 양)
         let pendingRecord = null; // 이름을 정하거나 다시 보내기를 기다리는 기록
         let myRank = null;        // 역대 순위 (loadBoard 가 센다)
+        let boardPage = 0;        // 지금 보는 순위표 페이지 (0부터)
+        let boardTotal = 0;       // 순위표 전체 인원
+        let boardReq = 0;         // 페이지를 빠르게 넘길 때 늦게 온 옛 응답을 버리려고 센다
         let timerRaf = null;
 
         function clientId() {
@@ -1816,6 +1848,8 @@
             pfName.classList.toggle('empty', !nick);
             pfEdit.textContent = nick ? '✏ 이름 바꾸기' : '✏ 정하기';
             const best = Number(loadPref('pg.best', '0'));
+            // 순위표가 한 페이지를 넘을 때만 — 내가 있는 페이지로 간다
+            pfJump.hidden = !(best && myRank && boardTotal > PAGE_SIZE);
             if (!best) { pfStats.textContent = '아직 기록이 없어요. ▶ 도전하기로 첫 기록을 세워 보세요.'; return; }
             const st = loadStats();
             pfStats.innerHTML = '최고 <strong>' + fmtClock(best) + '</strong>' + (myRank ? ' · 역대 ' + myRank + '등' : '') +
@@ -1933,37 +1967,64 @@
             }
         }
 
-        async function loadBoard() {
+        // content-range 머리글 "0-9/57" 의 57 (Prefer: count=exact 일 때 전체 줄 수)
+        function rangeTotal(res) {
+            const n = Number((res.headers.get('content-range') || '').split('/')[1]);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        // 순위표 한 페이지(PAGE_SIZE 명)를 읽는다. 전체 인원도 같이 받아 페이지 수를 정한다.
+        async function loadBoard(page = boardPage) {
+            const req = ++boardReq;
             const nick = loadPref('pg.nickname', '');
             const best = Number(loadPref('pg.best', '0'));
             try {
-                const res = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=nickname,time_ms,moves_count' +
-                    '&order=time_ms.asc,created_at.asc&limit=20', { headers: { apikey: SUPABASE_KEY } });
+                const [res, cr] = await Promise.all([
+                    fetch(SUPABASE_URL + '/rest/v1/best_records?select=nickname,time_ms,moves_count' +
+                        '&order=time_ms.asc,created_at.asc&offset=' + page * PAGE_SIZE + '&limit=' + PAGE_SIZE,
+                        { headers: { apikey: SUPABASE_KEY, Prefer: 'count=exact' } }),
+                    // 내 순위 = 나보다 빠른 사람 수 + 1 (지금 페이지 밖이어도 알 수 있게 따로 센다)
+                    best ? fetch(SUPABASE_URL + '/rest/v1/best_records?select=time_ms&time_ms=lt.' + best,
+                        { method: 'HEAD', headers: { apikey: SUPABASE_KEY, Prefer: 'count=exact' } }) : null,
+                ]);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const rows = await res.json();
+                if (req !== boardReq) return; // 그새 다른 페이지를 눌렀다
+                boardTotal = rangeTotal(res) ?? rows.length;
+                const pages = Math.max(1, Math.ceil(boardTotal / PAGE_SIZE));
+                if (!rows.length && page > 0) { loadBoard(pages - 1); return; } // 사람이 줄어 페이지가 사라졌다
+                boardPage = page;
+                if (cr) { const faster = rangeTotal(cr); myRank = faster === null ? null : faster + 1; }
                 if (!rows.length) {
                     rkList.innerHTML = '<li class="rk-empty">아직 기록이 없어요. 첫 번째가 되어 보세요!</li>';
                 } else {
                     rkList.replaceChildren(...rows.map((r, i) => {
+                        const no = page * PAGE_SIZE + i + 1;
                         const li = el('li', r.nickname === nick && r.time_ms === best ? 'me' : '');
-                        li.append(el('span', 'no', String(i + 1)), el('span', 'nm', r.nickname),
+                        li.append(el('span', 'no' + (no <= 3 ? ' r' + no : ''), String(no)), el('span', 'nm', r.nickname),
                                   el('span', 'tm', fmtClock(r.time_ms)), el('span', 'mv', r.moves_count + '수'));
                         return li;
                     }));
                 }
-                if (best) {
-                    // 내 순위 = 나보다 빠른 사람 수 + 1 (목록 20등 밖이어도 알 수 있게 따로 센다)
-                    const cr = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=time_ms&time_ms=lt.' + best,
-                        { method: 'HEAD', headers: { apikey: SUPABASE_KEY, Prefer: 'count=exact' } });
-                    const total = Number((cr.headers.get('content-range') || '').split('/')[1]);
-                    myRank = Number.isFinite(total) ? total + 1 : null;
-                }
+                rkPager.hidden = pages <= 1;
+                rkPage.textContent = (page + 1) + ' / ' + pages;
+                rkPrev.disabled = page === 0;
+                rkNext.disabled = page >= pages - 1;
             } catch (err) {
+                if (req !== boardReq) return;
                 // 무료 요금제는 한동안 안 쓰면 일시 정지된다 — 연습은 그대로 되게 조용히 알리기만
                 rkList.innerHTML = '<li class="rk-empty">순위표를 잠시 불러올 수 없어요.</li>';
+                rkPager.hidden = true;
                 console.warn('순위표를 불러오지 못함', err);
             }
             renderProfile();
+        }
+
+        // 내 순위가 있는 페이지로 가서 내 줄을 보이게 한다
+        async function jumpToMe() {
+            if (!myRank) return;
+            await loadBoard(Math.floor((myRank - 1) / PAGE_SIZE));
+            rkList.querySelector('li.me')?.scrollIntoView({ block: 'nearest' });
         }
 
         function setRankDrawer(open) {
@@ -1972,7 +2033,7 @@
             rankPanel.inert = !open; // 닫혀 있을 땐 화면 밖 버튼에 Tab 이 가지 않게
             savePref('pg.rankOpen', open ? '1' : '0');
             if (!open) { closeNameForm(); return; }
-            loadBoard();
+            loadBoard(0); // 열 때마다 1페이지부터
             if (!loadPref('pg.nickname', '')) openNameForm(); // 처음이면 닉네임부터
         }
         function openRank() { if (!rankDrawer.classList.contains('open')) setRankDrawer(true); }
@@ -1984,6 +2045,9 @@
         wire(document.getElementById('rk-close'), () => setRankDrawer(false));
         wire(rkStart, startChallenge);
         wire(pfEdit, openNameForm);
+        wire(pfJump, jumpToMe);
+        wire(rkPrev, () => loadBoard(boardPage - 1));
+        wire(rkNext, () => loadBoard(boardPage + 1));
         wire(document.getElementById('pf-cancel'), closeNameForm);
         pfForm.addEventListener('submit', async (e) => {
             e.preventDefault();
