@@ -802,6 +802,9 @@
         // 현재 사용자 이동 목록. 모델(alg)과 동기화하므로 키보드·화면 키보드 입력이
         // 모두 카운트·되돌리기에 반영된다. (스크램블은 setup으로 따로 관리)
         let userMoves = [];
+        // 이동 수 = 실제로 돌린 횟수. 되돌리기도 한 번 돌린 것으로 센다(R 후 되돌리기 = 2수).
+        // 통째 회전(x2·y)은 세지 않는다. 섞기·리셋·도전 시작에서 0 으로.
+        let turnCount = 0;
 
         // localStorage 는 사생활 보호 모드 등에서 비어 있거나 예외를 던질 수 있다.
         // 여기 저장하는 건 전부 "없어도 되는 편의"라 실패하면 기본값으로 간다.
@@ -855,6 +858,9 @@
         const SIDE = ['F', 'R', 'B', 'L'];
         const FACE_LETTERS = new Set(['R', 'L', 'U', 'D', 'F', 'B']);
         const FLIP_MOVE = 'x2'; // x 키: 큐브를 통째로 위아래로 뒤집기 (이동 수에서는 뺀다)
+        // 큐브를 통째로 돌리는 수(x2 뒤집기, y 옆으로 돌리기)는 푸는 수가 아니라 잡는 방향을 바꾸는
+        // 것이라 이동 수·기록의 수에서 뺀다. 기록(alg)에는 남으므로 되돌리기로 취소할 수 있다.
+        const countsAsMove = (m) => !!m && !/^[xyz]/.test(m);
 
         function cameraSideIndex() {
             return (((Math.round((viewLon - DEF_LON) / 90) % 4) + 4) % 4);
@@ -870,9 +876,6 @@
             const alg = (val && val.alg) ? val.alg : val;
             const s = alg ? alg.toString().trim() : "";
             userMoves = s ? s.split(/\s+/) : [];
-            // 뒤집기(x2)는 푸는 수가 아니라 잡는 방향을 바꾸는 것이라 이동 수에서 뺀다.
-            // 기록에는 남으므로 되돌리기로 취소할 수 있다.
-            countEl.textContent = String(userMoves.filter(m => m !== FLIP_MOVE).length);
             btnUndo.disabled = userMoves.length === 0;
         }
 
@@ -1119,7 +1122,8 @@
         //  수 실행
         // =====================================================================
         function doMove(move) {
-            player.experimentalAddMove(move); // 한 수씩 애니메이션(리스너가 카운트 갱신)
+            player.experimentalAddMove(move); // 한 수씩 애니메이션
+            if (countsAsMove(move)) setTurnCount(turnCount + 1);
             if (solveArmed) {
                 const now = performance.now();
                 if (solveStart === null) { solveStart = now; renderChallengeState(); } // 섞은 뒤 첫 수부터 잰다
@@ -1130,15 +1134,22 @@
 
         function undo() {
             if (userMoves.length === 0) return;
+            // 되돌리기도 한 번 돌린 것 — 이동 수를 줄이지 않고 늘린다
+            if (countsAsMove(userMoves[userMoves.length - 1])) setTurnCount(turnCount + 1);
             // 마지막 수를 뺀 수열로 다시 세팅하고 끝 상태로 스냅(자연스러운 되돌리기)
             player.alg = userMoves.slice(0, -1).join(" ");
             player.jumpToEnd();
+        }
+        function setTurnCount(n) {
+            turnCount = n;
+            countEl.textContent = String(n);
         }
 
         function resetToSolved() {
             player.experimentalSetupAlg = "";
             player.alg = "";
             player.jumpToEnd();
+            setTurnCount(0);
             solveArmed = false; // 리셋으로 완성된 건 푼 게 아니다
             challenge = false;
             hideSolved();
@@ -1147,7 +1158,7 @@
 
         // 워커/솔버 없이 즉시 동작하는 랜덤 무브 스크램블(연습용으로 충분).
         // 같은 면 연속·같은 축 3연속을 피해 자연스러운 섞임을 만든다.
-        // 기록 세우기의 섞기는 서버(supabase/functions/records)가 같은 규칙으로 따로 낸다.
+        // 기록 세우기도 이 섞기를 쓴다.
         function randomScramble(len = 22) {
             const faces = ["U", "D", "L", "R", "F", "B"];
             const suffix = ["", "'", "2"];
@@ -1168,6 +1179,7 @@
             player.experimentalSetupAlg = randomScramble(); // 시작 상태 = 스크램블
             player.alg = "";
             player.jumpToEnd();
+            setTurnCount(0);
             solveArmed = true;
             solveStart = null;
             challenge = false; // 평소 섞기는 연습용 — 기록을 올리지 않는다
@@ -1201,7 +1213,7 @@
             if (!pattern.experimentalIsSolved({ ignorePuzzleOrientation: true, ignoreCenterOrientation: true })) return;
             solveArmed = false;
             const ms = (lastMoveAt ?? solveStart) - solveStart;
-            const moves = alg.alg.toString().trim().split(/\s+/).filter(x => x && x !== FLIP_MOVE).length;
+            const moves = turnCount; // 되돌리기 포함, 통째 회전 제외
             const wasChallenge = challenge;
             await waitForAnimation();
             celebrate(moves, ms);
@@ -1802,6 +1814,7 @@
             player.experimentalSetupAlg = randomScramble();
             player.alg = "";
             player.jumpToEnd();
+            setTurnCount(0);
             solveArmed = true; solveStart = null; lastMoveAt = null;
             challenge = true;
             pendingRecord = null;
