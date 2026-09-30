@@ -119,14 +119,41 @@
         .rk-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .rk-head h3 { margin: 0; font-size: 1rem; color: var(--accent-cyan); }
         .rk-sub { margin: 18px 0 0; font-size: 0.82rem; color: var(--text-muted); font-weight: 700; }
-        .rk-close, .rk-rename {
+        .rk-close, .pf-edit, .pf-cancel {
             background: none; color: var(--text-muted);
             border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
             padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-family: var(--font-family);
         }
-        .rk-close:hover, .rk-rename:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-        .rk-rename { margin-top: 10px; }
-        .rk-desc { margin: 6px 0 12px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; word-break: keep-all; }
+        .rk-close:hover, .pf-edit:hover, .pf-cancel:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+        /* 내 프로필 카드 */
+        .rk-profile {
+            margin-top: 12px; padding: 12px;
+            background-color: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.22); border-radius: 12px;
+        }
+        .pf-row { display: flex; align-items: center; gap: 8px; }
+        .pf-icon { font-size: 1.1rem; }
+        .pf-name { flex: 1; min-width: 0; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pf-name.empty { color: var(--text-muted); font-weight: 400; font-size: 0.85rem; }
+        .pf-edit { flex: none; font-size: 0.75rem; padding: 3px 8px; }
+        .pf-form { display: flex; gap: 6px; margin-top: 10px; }
+        .pf-form[hidden] { display: none; }
+        .pf-form input {
+            flex: 1; min-width: 0;
+            background-color: rgba(255, 255, 255, 0.06); color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
+            padding: 7px 9px; font-family: var(--font-family); font-size: 0.88rem;
+        }
+        .pf-form input:focus { outline: none; border-color: var(--accent-cyan); }
+        .pf-form button[type="submit"] {
+            background-color: rgba(0, 240, 255, 0.12); color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan); border-radius: 8px;
+            padding: 7px 12px; font-family: var(--font-family); font-size: 0.82rem; font-weight: 700; cursor: pointer;
+        }
+        .pf-stats { margin-top: 8px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.7; word-break: keep-all; }
+        .pf-stats strong { color: var(--accent-cyan); font-family: monospace; font-size: 0.9rem; }
+        .rk-desc { margin: 14px 0 10px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; word-break: keep-all; }
         .rk-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .rk-start {
             background-color: var(--accent-cyan); color: var(--bg-color);
@@ -135,25 +162,9 @@
             box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
         }
         .rk-start:hover { box-shadow: 0 0 22px rgba(0, 240, 255, 0.55); }
-        .rk-me { font-size: 0.85rem; color: var(--text-main); }
-        .rk-me strong { color: var(--accent-cyan); font-family: monospace; }
         .rk-status { margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); word-break: keep-all; min-height: 1.2em; }
         .rk-status.good { color: var(--accent-cyan); font-weight: 700; }
         .rk-status.bad { color: var(--accent-yellow); }
-        .rk-nick { display: flex; gap: 8px; margin-top: 10px; }
-        .rk-nick[hidden] { display: none; }
-        .rk-nick input {
-            flex: 1; min-width: 0;
-            background-color: rgba(255, 255, 255, 0.06); color: var(--text-main);
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
-            padding: 8px 10px; font-family: var(--font-family); font-size: 0.9rem;
-        }
-        .rk-nick input:focus { outline: none; border-color: var(--accent-cyan); }
-        .rk-nick button {
-            background-color: rgba(0, 240, 255, 0.12); color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan); border-radius: 8px;
-            padding: 8px 14px; font-family: var(--font-family); font-size: 0.85rem; font-weight: 700; cursor: pointer;
-        }
         .rk-list { list-style: none; margin: 8px 0 0; padding: 0; }
         .rk-list li {
             display: grid; grid-template-columns: 1.8em minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline;
@@ -742,19 +753,29 @@
                 <h3>🏆 기록 세우기</h3>
                 <button type="button" class="rk-close" id="rk-close" aria-label="순위표 닫기">✕</button>
             </div>
+
+            <!-- 내 프로필: 이름과 내 기록 요약. 이름을 바꾸면 순위표에도 바로 반영된다 -->
+            <div class="rk-profile">
+                <div class="pf-row">
+                    <span class="pf-icon">👤</span>
+                    <span class="pf-name" id="pf-name"></span>
+                    <button type="button" class="pf-edit" id="pf-edit">✏ 이름 바꾸기</button>
+                </div>
+                <form class="pf-form" id="pf-form" hidden>
+                    <input type="text" id="pf-input" maxlength="12" placeholder="닉네임 (2~12자)" autocomplete="nickname" aria-label="닉네임">
+                    <button type="submit">저장</button>
+                    <button type="button" class="pf-cancel" id="pf-cancel">취소</button>
+                </form>
+                <div class="pf-stats" id="pf-stats"></div>
+            </div>
+
             <p class="rk-desc">도전할 때마다 새로 섞어요. 여러 번 도전할 수 있고, 가장 빠른 기록이 역대 순위에 남아요.</p>
             <div class="rk-actions">
                 <button type="button" class="rk-start" id="rk-start">▶ 도전하기</button>
-                <span class="rk-me" id="rk-me"></span>
             </div>
             <div class="rk-status" id="rk-status" aria-live="polite"></div>
-            <form class="rk-nick" id="rk-nick" hidden>
-                <input type="text" id="rk-nick-input" maxlength="12" placeholder="닉네임 (2~12자)" autocomplete="nickname" aria-label="닉네임">
-                <button type="submit">기록 올리기</button>
-            </form>
             <h4 class="rk-sub">역대 순위</h4>
             <ol class="rk-list" id="rk-list"></ol>
-            <button type="button" class="rk-rename" id="rk-rename" hidden>닉네임 바꾸기</button>
         </div>
     </aside>
 
@@ -1747,21 +1768,26 @@
         //  (사람마다 역대 최고 한 줄)에서 읽는다. 여러 번 도전할 수 있다.
         //  서버가 기록을 다시 확인하지 않는다(사용자 결정: 단순하게) — 사람이 낼 수 없는 기록
         //  (초당 15수 넘게, 15수 미만)만 DB 제약이 거절한다. supabase/schema.sql 참고.
+        //
+        //  맨 위 "내 프로필" 카드: 이름과 내 기록 요약. 이름을 바꾸면 rename_me 로 이미 올린 기록의
+        //  이름도 바꿔 순위표에 바로 반영한다. 프로필은 이 브라우저에 묶여 있다(pg.clientId).
         // =====================================================================
         const SUPABASE_URL = 'https://moljrurjnwyyexzuyivn.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_qT2kl-Q715TzeHVldzoMEA_PAIbT6sH'; // 공개 키 — 넣기와 순위 읽기만 된다
+        const SUPABASE_KEY = 'sb_publishable_qT2kl-Q715TzeHVldzoMEA_PAIbT6sH'; // 공개 키 — 넣기·순위 읽기·내 이름 바꾸기만 된다
         const rankDrawer = document.getElementById('rank-drawer');
         const rankHandle = document.getElementById('rank-handle');
         const rankPanel = document.getElementById('rank-panel');
         const rkStart = document.getElementById('rk-start');
-        const rkMe = document.getElementById('rk-me');
         const rkStatus = document.getElementById('rk-status');
-        const rkNick = document.getElementById('rk-nick');
-        const rkNickInput = document.getElementById('rk-nick-input');
         const rkList = document.getElementById('rk-list');
-        const rkRename = document.getElementById('rk-rename');
+        const pfName = document.getElementById('pf-name');
+        const pfEdit = document.getElementById('pf-edit');
+        const pfForm = document.getElementById('pf-form');
+        const pfInput = document.getElementById('pf-input');
+        const pfStats = document.getElementById('pf-stats');
         const timerEl = document.getElementById('pg-timer');
-        let pendingRecord = null; // 닉네임을 정하거나 다시 보내기를 기다리는 기록
+        let pendingRecord = null; // 이름을 정하거나 다시 보내기를 기다리는 기록
+        let myRank = null;        // 역대 순위 (loadBoard 가 센다)
         let timerRaf = null;
 
         function clientId() {
@@ -1776,6 +1802,45 @@
         function setStatus(text, kind = '') {
             rkStatus.textContent = text;
             rkStatus.className = 'rk-status' + (kind ? ' ' + kind : '');
+        }
+        const sbHeaders = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY };
+
+        // --- 내 프로필 ---
+        // 이름(pg.nickname), 최고 기록(pg.best), 도전 횟수·최근 기록(pg.stats)은 이 브라우저에 둔다.
+        function loadStats() {
+            try { return JSON.parse(loadPref('pg.stats', '{}')) || {}; } catch (_) { return {}; }
+        }
+        function renderProfile() {
+            const nick = loadPref('pg.nickname', '');
+            pfName.textContent = nick || '닉네임을 정해 주세요';
+            pfName.classList.toggle('empty', !nick);
+            pfEdit.textContent = nick ? '✏ 이름 바꾸기' : '✏ 정하기';
+            const best = Number(loadPref('pg.best', '0'));
+            if (!best) { pfStats.textContent = '아직 기록이 없어요. ▶ 도전하기로 첫 기록을 세워 보세요.'; return; }
+            const st = loadStats();
+            pfStats.innerHTML = '최고 <strong>' + fmtClock(best) + '</strong>' + (myRank ? ' · 역대 ' + myRank + '등' : '') +
+                '<br>도전 ' + (st.count || 0) + '번' + (st.last ? ' · 최근 <strong>' + fmtClock(st.last) + '</strong>' : '');
+        }
+        function openNameForm() {
+            pfForm.hidden = false;
+            pfInput.value = loadPref('pg.nickname', '');
+            pfInput.focus();
+        }
+        function closeNameForm() {
+            pfForm.hidden = true;
+            pfInput.blur(); // 포커스가 남으면 큐브 키 입력을 먹는다
+        }
+        // 이미 올린 기록이 있으면 그 이름도 바꿔 순위표에 바로 반영한다
+        async function saveName(nick) {
+            if (nick === loadPref('pg.nickname', '')) return;
+            if (Number(loadPref('pg.best', '0'))) {
+                const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/rename_me', {
+                    method: 'POST', headers: sbHeaders,
+                    body: JSON.stringify({ p_client_id: clientId(), p_nickname: nick }),
+                });
+                if (!res.ok) throw new Error('이름을 바꾸지 못했어요.');
+            }
+            savePref('pg.nickname', nick);
         }
 
         // --- 흐르는 시간 (큐브 밑) ---
@@ -1811,6 +1876,7 @@
 
         function startChallenge() {
             clearPending();
+            closeNameForm();
             player.experimentalSetupAlg = randomScramble();
             player.alg = "";
             player.jumpToEnd();
@@ -1818,7 +1884,6 @@
             solveArmed = true; solveStart = null; lastMoveAt = null;
             challenge = true;
             pendingRecord = null;
-            rkNick.hidden = true;
             hideSolved();
             stopAllSpin(); tweenToDefault(); // 기준 시점에서 시작
             renderChallengeState();
@@ -1833,14 +1898,8 @@
             const nick = loadPref('pg.nickname', '');
             if (nick) { sendRecord(rec, nick); return; }
             pendingRecord = rec;
-            setStatus('처음이네요! 순위표에 올릴 닉네임을 정해 주세요.');
-            showNickForm('');
-        }
-
-        function showNickForm(value) {
-            rkNick.hidden = false;
-            rkNickInput.value = value;
-            rkNickInput.focus();
+            setStatus('프로필에서 닉네임을 정하면 이 기록이 순위표에 올라가요.');
+            openNameForm();
         }
 
         async function sendRecord(rec, nickname) {
@@ -1848,7 +1907,7 @@
             try {
                 const res = await fetch(SUPABASE_URL + '/rest/v1/records', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Prefer: 'return=minimal' },
+                    headers: { ...sbHeaders, Prefer: 'return=minimal' },
                     body: JSON.stringify({ client_id: clientId(), nickname, time_ms: rec.timeMs, moves_count: rec.movesCount }),
                 });
                 if (!res.ok) {
@@ -1857,25 +1916,25 @@
                     throw new Error(err.code === '23514' ? '이 기록은 올릴 수 없어요.' : '기록을 올리지 못했어요.');
                 }
                 pendingRecord = null;
-                rkNick.hidden = true;
                 const prev = Number(loadPref('pg.best', '0'));
                 const improved = !prev || rec.timeMs < prev;
                 if (improved) savePref('pg.best', String(rec.timeMs));
+                const st = loadStats();
+                savePref('pg.stats', JSON.stringify({ count: (st.count || 0) + 1, last: rec.timeMs }));
                 setStatus(improved ? '🎉 최고 기록 ' + fmtClock(rec.timeMs) + '!'
-                                   : fmtClock(rec.timeMs) + ' — 최고 기록 ' + fmtClock(prev) + '은 그대로예요.', 'good');
+                                   : fmtClock(rec.timeMs) + ' — 최고 기록(' + fmtClock(prev) + ')은 그대로예요.', 'good');
+                renderProfile();
                 loadBoard();
             } catch (err) {
-                // 연결 실패 등 — 닉네임 칸을 다시 보여줘서 고치거나 다시 보낼 수 있게 한다
-                pendingRecord = rec;
+                pendingRecord = rec; // 프로필의 "저장"을 누르면 다시 올린다
                 const offline = err instanceof TypeError; // fetch 자체가 실패
-                setStatus(offline ? '기록 서버에 연결할 수 없어요. 잠시 후 다시 올려 주세요.' : err.message, 'bad');
-                showNickForm(nickname);
+                setStatus((offline ? '기록 서버에 연결할 수 없어요.' : err.message) + ' 프로필의 "저장"을 누르면 다시 올려요.', 'bad');
+                openNameForm();
             }
         }
 
         async function loadBoard() {
             const nick = loadPref('pg.nickname', '');
-            rkRename.hidden = !nick;
             const best = Number(loadPref('pg.best', '0'));
             try {
                 const res = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=nickname,time_ms,moves_count' +
@@ -1892,20 +1951,19 @@
                         return li;
                     }));
                 }
-                rkMe.textContent = '';
                 if (best) {
                     // 내 순위 = 나보다 빠른 사람 수 + 1 (목록 20등 밖이어도 알 수 있게 따로 센다)
                     const cr = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=time_ms&time_ms=lt.' + best,
                         { method: 'HEAD', headers: { apikey: SUPABASE_KEY, Prefer: 'count=exact' } });
                     const total = Number((cr.headers.get('content-range') || '').split('/')[1]);
-                    rkMe.innerHTML = '내 최고 <strong>' + fmtClock(best) + '</strong>' +
-                                     (Number.isFinite(total) ? ' · ' + (total + 1) + '등' : '');
+                    myRank = Number.isFinite(total) ? total + 1 : null;
                 }
             } catch (err) {
                 // 무료 요금제는 한동안 안 쓰면 일시 정지된다 — 연습은 그대로 되게 조용히 알리기만
                 rkList.innerHTML = '<li class="rk-empty">순위표를 잠시 불러올 수 없어요.</li>';
                 console.warn('순위표를 불러오지 못함', err);
             }
+            renderProfile();
         }
 
         function setRankDrawer(open) {
@@ -1913,7 +1971,9 @@
             rankHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
             rankPanel.inert = !open; // 닫혀 있을 땐 화면 밖 버튼에 Tab 이 가지 않게
             savePref('pg.rankOpen', open ? '1' : '0');
-            if (open) loadBoard();
+            if (!open) { closeNameForm(); return; }
+            loadBoard();
+            if (!loadPref('pg.nickname', '')) openNameForm(); // 처음이면 닉네임부터
         }
         function openRank() { if (!rankDrawer.classList.contains('open')) setRankDrawer(true); }
         function closeRankOnNarrow() {
@@ -1923,18 +1983,25 @@
         wire(rankHandle, () => setRankDrawer(!rankDrawer.classList.contains('open')));
         wire(document.getElementById('rk-close'), () => setRankDrawer(false));
         wire(rkStart, startChallenge);
-        wire(rkRename, () => showNickForm(loadPref('pg.nickname', '')));
-        rkNick.addEventListener('submit', (e) => {
+        wire(pfEdit, openNameForm);
+        wire(document.getElementById('pf-cancel'), closeNameForm);
+        pfForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const nick = rkNickInput.value.trim();
+            const nick = pfInput.value.trim();
             if ([...nick].length < 2 || [...nick].length > 12) { setStatus('닉네임은 2~12자로 해 주세요.', 'bad'); return; }
-            savePref('pg.nickname', nick);
-            rkNickInput.blur(); // 포커스가 남으면 큐브 키 입력을 먹는다
-            rkNick.hidden = true;
-            rkRename.hidden = false;
+            const renamed = nick !== loadPref('pg.nickname', '');
+            try {
+                await saveName(nick);
+            } catch (err) {
+                setStatus(err instanceof TypeError ? '기록 서버에 연결할 수 없어요.' : err.message, 'bad');
+                return;
+            }
+            closeNameForm();
+            renderProfile();
             if (pendingRecord) sendRecord(pendingRecord, nick);
-            else setStatus('닉네임을 바꿨어요. 다음 기록부터 이 이름으로 올라가요.', 'good');
+            else if (renamed) { setStatus('이름을 바꿨어요.', 'good'); loadBoard(); }
         });
+        renderProfile();
         setRankDrawer(loadPref('pg.rankOpen', '0') === '1');
 
         setLayout(layout);
