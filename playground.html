@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>직접 해보기 · 3D 큐브 마스터 가이드</title>
+    <title>직접 해보기 · 큐토리얼</title>
 
     <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles.css">
 
     <style>
         /* ===== 플레이그라운드 전용 스타일 (이 페이지에서만 사용) ===== */
+        /* 큐브를 크게 쓰면서도 첫 화면에 다 들어오도록 제목 위 여백(공용 150px)을 줄인다 */
+        #cta.standalone-page { padding-top: 100px; }
+
         .pg-wrap {
             display: flex;
             flex-direction: column;
@@ -17,14 +20,15 @@
             gap: 14px;
             width: 100%;
             max-width: 720px;
-            margin-top: 36px;
+            margin-top: 22px;
         }
 
         .pg-cube {
             position: relative;
             width: 100%;
-            max-width: 460px;
-            height: 420px;
+            max-width: 640px;
+            /* 화면 높이에 맞춰 줄어든다. 큐브 크기는 가로·세로 중 짧은 쪽이 정한다 */
+            height: clamp(360px, calc(100vh - 280px), 600px);
             background-color: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(0, 240, 255, 0.2);
             border-radius: 20px;
@@ -34,6 +38,8 @@
             touch-action: pan-y;
         }
         .pg-cube.dragging { cursor: grabbing; }
+        /* 끌어서 돌리기: 세로로 끄는 것도 면 회전이라 페이지 스크롤에 양보하지 않는다 */
+        .pg-cube.dragturn { touch-action: none; cursor: pointer; }
         .pg-cube:focus { outline: none; }
         .pg-cube:focus-visible {
             outline: 2px solid var(--accent-cyan);
@@ -46,24 +52,6 @@
             color: var(--text-muted); font-size: 0.95rem;
         }
         .pg-loading.error { color: var(--accent-yellow); text-align: center; padding: 20px; }
-
-        /* 면 이름 라벨 — 입력이 화면 기준이라 이 표시는 시점과 무관하게 항상 맞다 */
-        .pg-face-label {
-            position: absolute; pointer-events: none;
-            font-family: monospace; font-weight: 700; font-size: 1rem;
-            color: rgba(0, 240, 255, 0.85);
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
-            white-space: nowrap;
-        }
-        .pg-face-label em {
-            font-style: normal; font-family: var(--font-family);
-            font-weight: 400; font-size: 0.75rem; color: var(--text-muted);
-            margin-left: 4px;
-        }
-        .lb-u { top: 12px; left: 50%; transform: translateX(-50%); }
-        .lb-r { right: 14px; top: 50%; transform: translateY(-50%); }
-        .lb-f { bottom: 12px; left: 50%; transform: translateX(-50%); }
-        .pg-cube.labels-off .pg-face-label { display: none; }
 
         .pg-viewbar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         .pg-viewbar button {
@@ -78,75 +66,6 @@
         .pg-viewbar button:active:not(:disabled) { transform: scale(0.94); }
         .pg-viewbar button:disabled { opacity: 0.4; cursor: default; }
         .pg-viewbar button.on { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-
-        /* 지금 어느 면이 정면인지 — 기준이 넘어간 걸 놓치지 않게 */
-        .pg-facing {
-            font-size: 0.82rem; color: var(--text-muted);
-            padding: 4px 12px; border-radius: 14px;
-            border: 1px solid transparent;
-        }
-        .pg-facing strong { font-family: monospace; color: var(--accent-cyan); font-size: 0.95rem; }
-        @keyframes pg-facing-flash {
-            0%, 100% { border-color: transparent; background-color: transparent; }
-            35%      { border-color: rgba(0, 240, 255, 0.55); background-color: rgba(0, 240, 255, 0.1); }
-        }
-        .pg-facing.flash { animation: pg-facing-flash 0.7s ease 2; }
-        @keyframes pg-label-flash {
-            0%, 100% { opacity: 1; }
-            35%      { opacity: 0.25; }
-        }
-        .pg-cube.lbflash .pg-face-label { animation: pg-label-flash 0.7s ease 2; }
-
-        /* ===== 공식 연습 ===== */
-        .pg-drill {
-            width: 100%;
-            background-color: var(--surface-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 14px 16px;
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .drill-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .drill-title { font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem; }
-        .drill-top select {
-            flex: 1 1 220px; min-width: 0;
-            background-color: rgba(255, 255, 255, 0.06);
-            color: var(--text-main);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 8px; padding: 8px 10px;
-            font-family: var(--font-family); font-size: 0.88rem;
-        }
-        .drill-top select:disabled { opacity: 0.5; }
-        .drill-top button {
-            background-color: rgba(255, 255, 255, 0.04);
-            color: var(--text-muted);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px; padding: 8px 14px;
-            font-family: var(--font-family); font-size: 0.85rem; font-weight: 700;
-            cursor: pointer;
-        }
-        .drill-top button:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-
-        .drill-seq { display: flex; flex-wrap: wrap; gap: 6px; }
-        .drill-seq .dm {
-            font-family: monospace; font-weight: 700; font-size: 1rem;
-            padding: 5px 10px; border-radius: 7px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid transparent;
-            color: var(--text-muted);
-        }
-        .drill-seq .dm.done { color: rgba(0, 240, 255, 0.45); }
-        .drill-seq .dm.now {
-            color: var(--bg-color); background-color: var(--accent-cyan);
-            border-color: var(--accent-cyan);
-        }
-        .drill-msg { font-size: 0.88rem; color: var(--text-muted); word-break: keep-all; line-height: 1.7; }
-        .drill-msg.bad { color: var(--accent-yellow); }
-        .drill-msg.done { color: var(--accent-cyan); font-weight: 700; }
-        .kbkey.hint {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.25);
-        }
 
         /* 입력 상태 — 지금 치는 중인 수 + 방금 실행된 수 */
         .pg-io {
@@ -168,6 +87,7 @@
         }
         .pg-last.on { opacity: 1; }
         .pg-last strong { font-family: monospace; font-size: 1.05rem; color: var(--accent-yellow); }
+        .pg-last span { margin-left: 6px; color: var(--text-main); }
 
         .pg-status { font-size: 0.9rem; color: var(--text-muted); }
         .pg-status strong { color: var(--accent-cyan); font-family: monospace; }
@@ -195,15 +115,30 @@
         }
         .pg-session button.primary:hover:not(:disabled) { box-shadow: 0 0 25px rgba(0, 240, 255, 0.6); }
 
-        /* ===== 화면 키보드 ===== */
+        /* ===== 화면 키보드 =====
+           두 판으로 나뉜다 — kb-left: 면 돌리기(배치 고르기·면·붙이기·손 배치 왼손),
+                              kb-right: 손 배치 오른손·시점·기타.
+           좁은 화면: 큐브 아래 상자 하나에 그룹을 차례로 쌓는다(판은 display: contents).
+           넓은 화면: 두 판이 큐브 양옆으로 간다(상자가 display: contents) — 아래 @media 참고. */
         .pg-kb {
             width: 100%;
-            display: flex; flex-direction: column; gap: 9px;
+            display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px 14px;
             background-color: var(--surface-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
             padding: 14px 16px;
         }
+        .kb-panel { display: contents; }
+        .pg-kb .kb-panel > * { grid-column: 1 / -1; }
+        /* 판을 풀었을 때의 순서. 손 배치 왼손·오른손이 한 줄에 나란히 오도록 붙여 둔다 */
+        .kg-layout { order: 0; }
+        .kg-faces  { order: 1; }
+        .kg-mods   { order: 2; }
+        .pg-kb .kg-handL { order: 3; grid-column: 1; }
+        .pg-kb .kg-handR { order: 4; grid-column: 2; }
+        .kg-hmods  { order: 5; }
+        .kg-view   { order: 6; }
+        .kg-misc   { order: 7; }
         .kb-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
         .kb-label {
             width: 58px; flex: none;
@@ -239,12 +174,52 @@
         .kbkey.down em, .kbkey:hover:not(:disabled) em { color: inherit; opacity: 0.85; }
         .kbkey.w2 { min-width: 62px; }
         .kbkey.w3 { min-width: 86px; }
+        .kb-note { font-size: 0.78rem; color: var(--text-muted); }
 
-        .pg-hint {
-            font-size: 0.9rem; color: var(--text-muted); text-align: center;
-            max-width: 620px; word-break: keep-all; line-height: 1.9;
+        /* 배치에 따라 보이는 것 — 화면 키보드뿐 아니라 안내문도 같이 바뀐다 */
+        #cta[data-layout="hand"] [data-only="notation"],
+        #cta:not([data-layout="hand"]) [data-only="hand"] { display: none !important; }
+
+        /* 배치 고르기 */
+        .kb-layout {
+            display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+            padding-bottom: 11px; margin-bottom: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .pg-hint strong { color: var(--accent-cyan); }
+        .kb-layout .seg {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 20px; padding: 6px 14px;
+            font-family: var(--font-family); font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; transition: all 0.15s ease;
+        }
+        .kb-layout .seg em {
+            font-style: normal; font-weight: 400; font-size: 0.72rem;
+            margin-left: 6px; opacity: 0.8;
+        }
+        .kb-layout .seg:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .kb-layout .seg.on {
+            background-color: rgba(0, 240, 255, 0.12);
+            border-color: var(--accent-cyan); color: var(--accent-cyan);
+        }
+        /* 손 배치 — 실제 키보드 두 줄을 왼손·오른손 반씩. 위치가 곧 의미라서 안 쓰는 키도 자리를 지킨다 */
+        .hand-half { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .hb-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+        .hb-top { margin-right: 8%; }
+        .hb-home { margin-left: 8%; }
+        .kbkey.hk { min-width: 0; padding: 7px 2px; }
+        .kbkey.hk.lh { background-color: rgba(255, 222, 0, 0.06); }
+        .kbkey.hk.rh { background-color: rgba(0, 240, 255, 0.06); }
+        .kbkey.hk.home em { text-decoration: underline; text-underline-offset: 2px; }
+        .hk.off {
+            display: flex; align-items: center; justify-content: center;
+            border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 7px;
+            color: rgba(255, 255, 255, 0.2); font-family: monospace; font-size: 0.78rem;
+        }
+        .hb-legend { font-size: 0.72rem; padding: 0 4px; }
+        .hb-legend.l { color: var(--accent-yellow); text-align: left; }
+        .hb-legend.r { color: var(--accent-cyan); text-align: right; }
 
         /* 휴대폰 안내 (좁은 화면에서만) */
         .pg-mobile-note {
@@ -259,56 +234,6 @@
         }
         .pg-mobile-note strong { color: var(--accent-yellow); }
 
-        /* 가이드 */
-        .pg-keys {
-            width: 100%;
-            background-color: var(--surface-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-        }
-        .pg-keys summary {
-            cursor: pointer; padding: 14px 18px;
-            font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem;
-        }
-        .pg-keys-body { padding: 0 18px 20px; }
-        .pg-keys h4 {
-            font-size: 0.85rem; color: var(--text-muted); font-weight: 700;
-            margin: 18px 0 10px; letter-spacing: 0.02em;
-        }
-        .pg-keys h4:first-child { margin-top: 4px; }
-        .pg-keys p.note {
-            font-size: 0.88rem; color: var(--text-muted);
-            line-height: 1.9; word-break: keep-all; margin: 0 0 10px;
-        }
-        .pg-keys p.note strong { color: var(--accent-cyan); }
-
-        /* 예시 카드: 무엇을 치면 무엇이 되는지 한 줄로 */
-        .pg-ex { display: grid; gap: 7px; }
-        .pg-ex-row {
-            display: grid;
-            grid-template-columns: minmax(0, 150px) 18px minmax(0, 1fr);
-            align-items: center; gap: 10px;
-            padding: 8px 10px;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: 9px;
-        }
-        .pg-ex-row .arw { color: var(--text-muted); text-align: center; }
-        .pg-ex-row .res { font-family: monospace; font-weight: 700; color: var(--accent-cyan); font-size: 1rem; }
-        .pg-ex-row .res em {
-            font-style: normal; font-family: var(--font-family); font-weight: 400;
-            font-size: 0.82rem; color: var(--text-muted); margin-left: 8px;
-        }
-        kbd {
-            display: inline-block;
-            background-color: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-bottom-width: 2px;
-            border-radius: 5px;
-            padding: 1px 7px; margin: 0 1px;
-            font-family: monospace; font-size: 0.88em; font-weight: 700;
-            color: var(--text-main);
-        }
-
         /* 큐브를 눌렀는데 아무 일도 없을 때 어디를 보면 되는지 알려준다 */
         @keyframes pg-flash {
             0%, 100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
@@ -316,12 +241,133 @@
         }
         .pg-kb.flash { animation: pg-flash 0.9s ease 2; }
 
+        /* ===== 공식 서랍 (오른쪽, 보기만) =====
+           기존 화면은 그대로 두고 화면 오른쪽 끝에서 밀려 나와 위에 겹친다.
+           닫혀 있을 땐 손잡이(📖 공식)만 오른쪽 끝에 붙어 있다. */
+        .alg-drawer {
+            position: fixed; top: 64px; right: 0; bottom: 0;   /* 64px = 고정 메뉴바 높이 */
+            width: min(280px, 86vw);                           /* 폭 1000 화면에서도 큐브를 안 가리는 폭 */
+            z-index: 900;                                      /* 메뉴바(1000) 아래 */
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+        }
+        .alg-drawer.open { transform: none; }
+        .alg-handle {
+            position: absolute; right: 100%; top: 38%;
+            writing-mode: vertical-rl;
+            padding: 14px 7px;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0, 240, 255, 0.35); border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: var(--accent-cyan);
+            font-family: var(--font-family); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em;
+            cursor: pointer;
+            box-shadow: -4px 0 14px rgba(0, 0, 0, 0.35);
+        }
+        .alg-handle:hover { background-color: rgba(0, 240, 255, 0.12); }
+        .alg-panel {
+            height: 100%; overflow-y: auto; overscroll-behavior: contain;
+            background-color: var(--surface-color);
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: -10px 0 28px rgba(0, 0, 0, 0.5);
+            padding: 16px 14px 32px;
+            text-align: left;
+        }
+        .alg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .alg-head h3 { margin: 0; font-size: 1rem; color: var(--accent-cyan); }
+        .alg-close {
+            background: none; color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+            padding: 4px 10px; font-size: 0.85rem; cursor: pointer;
+        }
+        .alg-close:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .alg-note {
+            margin: 8px 0 10px; font-size: 0.78rem; line-height: 1.65;
+            color: var(--text-muted); word-break: keep-all;
+        }
+        .alg-step { border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 9px 0 4px; }
+        .alg-step summary { cursor: pointer; font-size: 0.88rem; font-weight: 700; color: var(--text-main); }
+        .alg-step summary .badge {
+            font-family: monospace; font-size: 0.72rem; color: var(--accent-cyan); margin-right: 6px;
+        }
+        .alg-item { margin: 9px 0 0 2px; }
+        .alg-item .nm { font-size: 0.76rem; color: var(--text-muted); word-break: keep-all; line-height: 1.5; }
+        .alg-item .mv {
+            font-family: monospace; font-weight: 700; font-size: 0.98rem;
+            color: var(--text-main); word-spacing: 0.15em; line-height: 1.5;
+        }
+        .alg-msg { font-size: 0.82rem; color: var(--text-muted); word-break: keep-all; }
+
         @media (max-width: 900px) {
             .pg-mobile-note { display: block; }
         }
+
+        /* ===== 넓은 화면: 화면 키보드를 큐브 양옆으로 =====
+           키를 치면서 큐브와 키 반짝임을 한눈에 보게 한다. 큐브 크기는 세로(최대 600)가
+           정하므로 가운데 칸을 600으로 줄여도 큐브는 작아지지 않는다. */
+        @media (min-width: 1080px) {
+            /* 공용 section 폭(1000px)으로는 양옆 판 + 큐브 600 이 안 들어간다 */
+            #cta.standalone-page { max-width: 1120px; }
+            .pg-wrap {
+                display: grid;
+                grid-template-columns: minmax(170px, 1fr) minmax(0, 600px) minmax(170px, 1fr);
+                grid-template-areas:
+                    "left cube    right"
+                    ".    bar     ."
+                    ".    io      ."
+                    ".    status  ."
+                    ".    session .";
+                gap: 14px 20px;
+                max-width: 1040px;
+                justify-items: center;
+            }
+            #pg-cube      { grid-area: cube; }
+            .pg-viewbar   { grid-area: bar; }
+            .pg-io        { grid-area: io; }
+            .pg-status    { grid-area: status; }
+            .pg-session   { grid-area: session; }
+
+            .pg-kb { display: contents; }
+            .kb-panel {
+                display: flex; flex-direction: column; gap: 14px;
+                align-self: center; width: 100%;
+                background-color: var(--surface-color);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 14px;
+                padding: 14px 12px;
+            }
+            .kb-left  { grid-area: left; }
+            .kb-right { grid-area: right; }
+            .pg-kb.flash .kb-panel { animation: pg-flash 0.9s ease 2; }
+
+            /* 판 안: 이름표는 윗줄, 키는 격자 */
+            .kb-panel .kb-label { width: 100%; }
+            .kb-panel .kbkey { min-width: 0; padding: 8px 4px; }
+            .kb-panel .kbkey.w3 { font-size: 0.85rem; }   /* Shift+Del 이 두 칸 격자에 들어가게 */
+            .kb-layout { flex-direction: column; align-items: stretch; }
+            .kb-layout .seg { text-align: left; }
+            .kg-faces, .kg-mods, .kg-view, .kg-misc { display: grid; gap: 6px; }
+            .kg-faces .kb-label, .kg-mods .kb-label,
+            .kg-view .kb-label, .kg-misc .kb-label { grid-column: 1 / -1; }
+            .kg-faces { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .kg-mods  { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .kg-mods [data-mod] { grid-column: 1 / -1; }
+            .kg-misc  { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            /* 방향키는 실제 키보드처럼 ↑ 가 가운데 위 */
+            .kg-view  { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .kg-view [data-view="ArrowUp"]    { grid-column: 2; grid-row: 2; }
+            .kg-view [data-view="ArrowLeft"]  { grid-column: 1; grid-row: 3; }
+            .kg-view [data-view="ArrowDown"]  { grid-column: 2; grid-row: 3; }
+            .kg-view [data-view="ArrowRight"] { grid-column: 3; grid-row: 3; }
+            .kg-view [data-act="viewreset"]   { grid-column: 1 / 3; grid-row: 4; }
+            .kg-view [data-face="y"]          { grid-column: 3; grid-row: 4; }
+        }
         @media (max-width: 480px) {
-            .pg-cube { height: 340px; }
+            /* 폭이 큐브 크기를 정하므로 세로는 정사각형이면 충분하다 */
+            .pg-cube { height: auto; aspect-ratio: 1 / 1; }
             .kb-label { width: 100%; }
+            .hb-row { gap: 3px; }
+            .kbkey.hk { font-size: 0.82rem; }
         }
     </style>
 </head>
@@ -330,7 +376,7 @@
     <nav class="site-nav">
         <a href="index.html" class="nav-logo">
             <span class="logo-icon">🧊</span>
-            <span>3D 큐브 마스터</span>
+            <span>큐토리얼</span>
         </a>
         <input type="checkbox" id="nav-toggle-check" class="nav-toggle-input" aria-hidden="true">
         <div class="nav-panel">
@@ -349,14 +395,10 @@
 
     <section id="cta" class="standalone-page">
         <h2 class="section-title">직접 큐브 돌려보기</h2>
-        <p class="pg-hint">
-            큐브에 붙은 <strong>이름 그대로</strong> 치면 됩니다. 오른쪽에 보이는 면이 <strong>R</strong>, 윗면이 <strong>U</strong>.<br>
-            시점을 돌리면 <strong>이름도 같이 따라옵니다</strong> — 어느 각도에서든 오른쪽이 R이에요.
-        </p>
 
         <div class="pg-wrap">
             <p class="pg-mobile-note">
-                📱 키보드가 없어도 <strong>아래 화면 키보드를 눌러서</strong> 돌릴 수 있어요.
+                📱 <strong>큐브를 손가락으로 끌어서</strong> 돌리면 됩니다. 아래 화면 키보드로도 돼요.
             </p>
 
             <div id="pg-cube" class="pg-cube" tabindex="0"
@@ -368,22 +410,17 @@
                     experimental-move-press-input="none"
                     control-panel="none"
                     background="none"></twisty-player>
-                <div class="pg-face-label lb-u">U<em>윗면</em></div>
-                <div class="pg-face-label lb-r">R<em>오른쪽</em></div>
-                <div class="pg-face-label lb-f">F<em>앞면</em></div>
                 <div id="pg-loading" class="pg-loading">3D 큐브 불러오는 중…</div>
             </div>
 
             <div class="pg-viewbar">
                 <button type="button" id="pg-view-reset" disabled>🧭 기준 시점</button>
-                <button type="button" id="pg-labels" class="on">🏷 면 이름</button>
+                <button type="button" id="pg-dragturn" aria-pressed="false">✋ 끌어서 돌리기</button>
             </div>
-
-            <div class="pg-facing" id="pg-facing"></div>
 
             <div class="pg-io">
                 <div id="pg-chip" class="pg-chip" aria-live="polite"></div>
-                <div id="pg-last" class="pg-last">방금 <strong id="pg-last-move"></strong></div>
+                <div id="pg-last" class="pg-last">방금 <strong id="pg-last-move"></strong><span id="pg-last-act"></span></div>
             </div>
 
             <div class="pg-status">이동 수: <strong id="pg-count">0</strong></div>
@@ -394,136 +431,115 @@
                 <button type="button" id="pg-reset" disabled>↺ 리셋(완성 상태로)</button>
             </div>
 
-            <!-- 공식 연습: 공식의 역순을 시작 상태로 깔아두고, 공식을 그대로 치면 풀린다 -->
-            <div class="pg-drill" id="pg-drill">
-                <div class="drill-top">
-                    <span class="drill-title">🎯 공식 연습</span>
-                    <select id="drill-pick" aria-label="연습할 공식 고르기" disabled>
-                        <option value="">— 공식 고르기 —</option>
-                    </select>
-                    <button type="button" id="drill-stop" hidden>끄기</button>
-                </div>
-                <div id="drill-body" hidden>
-                    <div class="drill-seq" id="drill-seq"></div>
-                    <div class="drill-msg" id="drill-msg"></div>
-                </div>
-            </div>
-
-            <!-- 화면 키보드: 눌러도 되고, 진짜 키를 누르면 여기가 반짝인다 -->
+            <!-- 화면 키보드: 눌러도 되고, 진짜 키를 누르면 여기가 반짝인다.
+                 넓은 화면에선 두 판이 큐브 양옆으로 간다 (왼쪽 = 면 돌리기, 오른쪽 = 시점·기타) -->
             <div class="pg-kb" id="pg-kb">
-                <div class="kb-row">
-                    <span class="kb-label">면</span>
-                    <button type="button" class="kbkey" data-face="R" data-code="KeyR">R<em>오른쪽</em></button>
-                    <button type="button" class="kbkey" data-face="L" data-code="KeyL">L<em>왼쪽</em></button>
-                    <button type="button" class="kbkey" data-face="U" data-code="KeyU">U<em>윗면</em></button>
-                    <button type="button" class="kbkey" data-face="D" data-code="KeyD">D<em>아랫면</em></button>
-                    <button type="button" class="kbkey" data-face="F" data-code="KeyF">F<em>앞면</em></button>
-                    <button type="button" class="kbkey" data-face="B" data-code="KeyB">B<em>뒷면</em></button>
-                </div>
-                <div class="kb-row">
-                    <span class="kb-label">붙이기</span>
-                    <button type="button" class="kbkey w3" data-mod="shift" data-code="ShiftLeft">Shift<em>+면 = 반대</em></button>
-                    <button type="button" class="kbkey" data-suffix="prime" data-code="Quote">'<em>반대</em></button>
-                    <button type="button" class="kbkey" data-suffix="double" data-code="Digit2">2<em>180°</em></button>
-                    <button type="button" class="kbkey" data-suffix="wide" data-code="KeyW">w<em>두 층</em></button>
-                </div>
-                <div class="kb-row">
-                    <span class="kb-label">시점</span>
-                    <button type="button" class="kbkey" data-view="ArrowLeft" data-code="ArrowLeft">←</button>
-                    <button type="button" class="kbkey" data-view="ArrowRight" data-code="ArrowRight">→</button>
-                    <button type="button" class="kbkey" data-view="ArrowUp" data-code="ArrowUp">↑</button>
-                    <button type="button" class="kbkey" data-view="ArrowDown" data-code="ArrowDown">↓</button>
-                    <button type="button" class="kbkey w2" data-act="viewreset" data-code="Digit0">0<em>기준</em></button>
-                    <button type="button" class="kbkey" data-face="y" data-code="KeyY">y<em>통째로</em></button>
-                </div>
-                <div class="kb-row">
-                    <span class="kb-label">기타</span>
-                    <button type="button" class="kbkey w2" data-act="commit" data-code="Enter">Enter<em>즉시</em></button>
-                    <button type="button" class="kbkey w2" data-act="cancel" data-code="Escape">Esc<em>취소</em></button>
-                    <button type="button" class="kbkey w2" data-act="back" data-code="Backspace">⌫<em>되돌리기</em></button>
-                    <button type="button" class="kbkey w3" data-act="reset" data-code="Delete">Shift+Del<em>리셋</em></button>
-                </div>
-            </div>
-
-            <details class="pg-keys" id="pg-keys" open>
-                <summary>⌨ 어떻게 치는지</summary>
-                <div class="pg-keys-body">
-                    <h4>① 면 이름은 화면 기준입니다</h4>
-                    <p class="note">
-                        큐브에 <strong>U · R · F</strong> 라벨이 붙어 있습니다. 보이는 그대로 치면 됩니다.
-                        시점을 돌리면 <strong>이름이 따라오기 때문에</strong>, 어느 각도에서 보든
-                        오른쪽에 보이는 면은 항상 <strong>R</strong> 입니다. 반대쪽 세 면은
-                        L(왼쪽) · D(아랫면) · B(뒷면) 이고요.
-                    </p>
-
-                    <h4>② 글자 하나 = 시계 방향 90도</h4>
-                    <div class="pg-ex">
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd></div><div class="arw">→</div>
-                            <div class="res">R<em>오른쪽 면을 시계 방향으로</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>Shift</kbd>+<kbd>R</kbd></div><div class="arw">→</div>
-                            <div class="res">R'<em>반대 방향. 바로 실행됩니다</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd> <kbd>'</kbd></div><div class="arw">→</div>
-                            <div class="res">R'<em>위와 같은 결과</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd> <kbd>2</kbd></div><div class="arw">→</div>
-                            <div class="res">R2<em>180도</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd> <kbd>R</kbd></div><div class="arw">→</div>
-                            <div class="res">R2<em>2는 "두 번"이라 두 번 눌러도 됩니다</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd> <kbd>w</kbd></div><div class="arw">→</div>
-                            <div class="res">Rw<em>바깥 두 층을 한꺼번에</em></div>
-                        </div>
-                        <div class="pg-ex-row">
-                            <div><kbd>R</kbd> <kbd>w</kbd> <kbd>'</kbd></div><div class="arw">→</div>
-                            <div class="res">Rw'<em>이어서 계속 붙일 수 있습니다</em></div>
-                        </div>
+                <div class="kb-panel kb-left">
+                    <div class="kb-layout kg-layout" role="radiogroup" aria-label="키 배치">
+                        <span class="kb-label">배치</span>
+                        <button type="button" class="seg" data-layout="notation" role="radio" aria-checked="true">기호 배치<em>R 키 = R</em></button>
+                        <button type="button" class="seg" data-layout="hand" role="radio" aria-checked="false">손 배치<em>오른손 = 오른쪽 면</em></button>
                     </div>
 
-                    <h4>③ 공식 하나 쳐보기</h4>
-                    <p class="note">
-                        튜토리얼 2단계 공식 <strong>R U R' U'</strong> 는 이렇게 칩니다 —
-                        <kbd>R</kbd> <kbd>U</kbd> <kbd>R</kbd> <kbd>'</kbd> <kbd>U</kbd> <kbd>'</kbd><br>
-                        글자를 누르면 <strong>입력 중: R</strong> 이 떴다가, 다음 키를 누르는 순간 확정돼서 돌아갑니다.
-                        바로 돌리고 싶으면 <kbd>Enter</kbd>, 잘못 눌렀으면 <kbd>Esc</kbd> 입니다.
-                    </p>
+                    <!-- 기호 배치: 화면에 적힌 기호를 그대로 친다 -->
+                    <div class="kb-row kg-faces" data-only="notation">
+                        <span class="kb-label">면</span>
+                        <button type="button" class="kbkey" data-face="R" data-code="KeyR">R<em>오른쪽</em></button>
+                        <button type="button" class="kbkey" data-face="L" data-code="KeyL">L<em>왼쪽</em></button>
+                        <button type="button" class="kbkey" data-face="U" data-code="KeyU">U<em>윗면</em></button>
+                        <button type="button" class="kbkey" data-face="D" data-code="KeyD">D<em>아랫면</em></button>
+                        <button type="button" class="kbkey" data-face="F" data-code="KeyF">F<em>앞면</em></button>
+                        <button type="button" class="kbkey" data-face="B" data-code="KeyB">B<em>뒷면</em></button>
+                    </div>
+                    <div class="kb-row kg-mods" data-only="notation">
+                        <span class="kb-label">붙이기</span>
+                        <button type="button" class="kbkey w3" data-mod="shift" data-code="ShiftLeft">Shift<em>+면 = 반대</em></button>
+                        <button type="button" class="kbkey" data-suffix="prime" data-code="Quote">'<em>반대</em></button>
+                        <button type="button" class="kbkey" data-suffix="double" data-code="Digit2">2<em>180°</em></button>
+                        <button type="button" class="kbkey" data-suffix="wide" data-code="KeyW">w<em>두 층</em></button>
+                    </div>
 
-                    <h4>④ 시점</h4>
-                    <p class="note">
-                        큐브를 <strong>드래그</strong>하면 돌아갑니다. 방향키는 <strong>누르고 있는 동안</strong>
-                        계속 돌고, <kbd>0</kbd> 을 누르면 처음 각도로 돌아옵니다.
-                        <kbd>y</kbd> 는 큐브를 통째로 돌리는 수(기록에 남습니다)라 시점 회전과는 다릅니다.
-                    </p>
-
-                    <h4>⑤ 공식 연습</h4>
-                    <p class="note">
-                        위에서 <strong>🎯 공식 연습</strong> 목록에서 하나를 고르면, 그 공식이 필요한 상태로
-                        큐브가 세팅됩니다. 공식을 끝까지 치면 <strong>풀립니다.</strong>
-                        다음에 칠 수를 알려주고 화면 키보드에서 눌러야 할 키가 빛나며,
-                        틀린 수는 <strong>아예 실행되지 않으니</strong> 큐브가 망가질 걱정 없이 반복하면 됩니다.
-                        같은 공식을 다시 하려면 <strong>↺ 리셋</strong>입니다.
-                        공식은 정해진 방향을 전제하므로, 연습 중에는 <strong>시점이 고정</strong>됩니다.
-                    </p>
-
-                    <h4>⑥ 그 외</h4>
-                    <p class="note">
-                        <kbd>Backspace</kbd> 는 치던 글자를 지우고, 남은 게 없으면 <strong>되돌리기</strong>입니다.
-                        <kbd>Shift</kbd>+<kbd>Delete</kbd> 는 완성 상태로 리셋합니다.
-                        섞기는 실수로 눌리면 안 되므로 <strong>마우스로만</strong> 할 수 있습니다.
-                        기호가 헷갈리면 <a href="notation.html" class="highlight-cyan">기호 읽는 법</a>을 보세요.
-                    </p>
+                    <!-- 손 배치 왼손: 키 하나 = 수 하나. 키캡에 수, 아래에 누를 글자 -->
+                    <div class="hand-half kg-handL" data-only="hand">
+                        <div class="hb-row hb-top">
+                            <span class="hk off">q</span>
+                            <button type="button" class="kbkey hk lh" data-hand="KeyW" data-code="KeyW">B<em>w</em></button>
+                            <button type="button" class="kbkey hk lh" data-hand="KeyE" data-code="KeyE">L'<em>e</em></button>
+                            <span class="hk off">r</span>
+                            <span class="hk off">t</span>
+                        </div>
+                        <div class="hb-row hb-home">
+                            <button type="button" class="kbkey hk lh" data-hand="KeyA" data-code="KeyA">y'<em>a</em></button>
+                            <button type="button" class="kbkey hk lh" data-hand="KeyS" data-code="KeyS">D<em>s</em></button>
+                            <button type="button" class="kbkey hk lh" data-hand="KeyD" data-code="KeyD">L<em>d</em></button>
+                            <button type="button" class="kbkey hk lh home" data-hand="KeyF" data-code="KeyF">U'<em>f</em></button>
+                            <button type="button" class="kbkey hk lh" data-hand="KeyG" data-code="KeyG">F'<em>g</em></button>
+                        </div>
+                        <div class="hb-legend l">← 왼손</div>
+                    </div>
+                    <div class="kb-row kg-hmods" data-only="hand">
+                        <span class="kb-label">붙이기</span>
+                        <button type="button" class="kbkey w3" data-mod="shift" data-code="ShiftLeft">Shift<em>+키 = 두 층(w)</em></button>
+                        <span class="kb-note">180°는 같은 키를 두 번</span>
+                    </div>
                 </div>
-            </details>
+
+                <div class="kb-panel kb-right">
+                    <!-- 손 배치 오른손 -->
+                    <div class="hand-half kg-handR" data-only="hand">
+                        <div class="hb-row hb-top">
+                            <span class="hk off">y</span>
+                            <span class="hk off">u</span>
+                            <button type="button" class="kbkey hk rh" data-hand="KeyI" data-code="KeyI">R<em>i</em></button>
+                            <button type="button" class="kbkey hk rh" data-hand="KeyO" data-code="KeyO">B'<em>o</em></button>
+                            <span class="hk off">p</span>
+                        </div>
+                        <div class="hb-row hb-home">
+                            <button type="button" class="kbkey hk rh" data-hand="KeyH" data-code="KeyH">F<em>h</em></button>
+                            <button type="button" class="kbkey hk rh home" data-hand="KeyJ" data-code="KeyJ">U<em>j</em></button>
+                            <button type="button" class="kbkey hk rh" data-hand="KeyK" data-code="KeyK">R'<em>k</em></button>
+                            <button type="button" class="kbkey hk rh" data-hand="KeyL" data-code="KeyL">D'<em>l</em></button>
+                            <button type="button" class="kbkey hk rh" data-hand="Semicolon" data-code="Semicolon">y<em>;</em></button>
+                        </div>
+                        <div class="hb-legend r">오른손 →</div>
+                    </div>
+
+                    <div class="kb-row kg-view">
+                        <span class="kb-label">시점</span>
+                        <button type="button" class="kbkey" data-view="ArrowLeft" data-code="ArrowLeft">←</button>
+                        <button type="button" class="kbkey" data-view="ArrowRight" data-code="ArrowRight">→</button>
+                        <button type="button" class="kbkey" data-view="ArrowUp" data-code="ArrowUp">↑</button>
+                        <button type="button" class="kbkey" data-view="ArrowDown" data-code="ArrowDown">↓</button>
+                        <button type="button" class="kbkey w2" data-act="viewreset" data-code="Digit0">0<em>기준</em></button>
+                        <button type="button" class="kbkey" data-face="y" data-code="KeyY" data-only="notation">y<em>통째로</em></button>
+                    </div>
+                    <div class="kb-row kg-misc">
+                        <span class="kb-label">기타</span>
+                        <button type="button" class="kbkey w2" data-act="commit" data-code="Enter" data-only="notation">Enter<em>즉시</em></button>
+                        <button type="button" class="kbkey w2" data-act="cancel" data-code="Escape" data-only="notation">Esc<em>취소</em></button>
+                        <button type="button" class="kbkey w2" data-act="back" data-code="Backspace">⌫<em>되돌리기</em></button>
+                        <button type="button" class="kbkey w3" data-act="reset" data-code="Delete">Shift+Del<em>리셋</em></button>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
+
+    <!-- 공식 서랍: 기존 화면 위로 오른쪽에서 밀려 나온다. 공식은 tutorial.html 에서 읽어 온다 -->
+    <aside class="alg-drawer" id="alg-drawer" aria-label="공식 모음">
+        <button type="button" class="alg-handle" id="alg-handle" aria-expanded="false" aria-controls="alg-panel">📖 공식</button>
+        <div class="alg-panel" id="alg-panel">
+            <div class="alg-head">
+                <h3>📖 공식 모음</h3>
+                <button type="button" class="alg-close" id="alg-close" aria-label="공식 모음 닫기">✕</button>
+            </div>
+            <p class="alg-note">
+                Step 1~2는 흰 면을 위로, Step 3부터는 흰 면을 바닥으로 잡고 보세요.
+                상황 설명은 <a href="tutorial.html" class="highlight-cyan">7단계 해법</a>에 있습니다.
+            </p>
+            <div id="alg-list"><p class="alg-msg">불러오는 중…</p></div>
+        </div>
+    </aside>
 
     <div class="spacer"></div>
 
@@ -536,30 +552,36 @@
         import "https://cdn.cubing.net/v0/js/cubing/twisty";
 
         const player = document.getElementById('pg-player');
+        const sectionEl = document.getElementById('cta');
         const loading = document.getElementById('pg-loading');
         const countEl = document.getElementById('pg-count');
         const chipEl = document.getElementById('pg-chip');
         const lastEl = document.getElementById('pg-last');
         const lastMoveEl = document.getElementById('pg-last-move');
+        const lastActEl = document.getElementById('pg-last-act');
         const cubeBox = document.getElementById('pg-cube');
         const kbBox = document.getElementById('pg-kb');
         const btnScramble = document.getElementById('pg-scramble');
         const btnUndo = document.getElementById('pg-undo');
         const btnReset = document.getElementById('pg-reset');
         const btnViewReset = document.getElementById('pg-view-reset');
-        const btnLabels = document.getElementById('pg-labels');
-        const facingEl = document.getElementById('pg-facing');
-        const drillPick = document.getElementById('drill-pick');
-        const drillStop = document.getElementById('drill-stop');
-        const drillBody = document.getElementById('drill-body');
-        const drillSeq = document.getElementById('drill-seq');
-        const drillMsg = document.getElementById('drill-msg');
+        const btnDragTurn = document.getElementById('pg-dragturn');
 
         let ready = false;
 
         // 현재 사용자 이동 목록. 모델(alg)과 동기화하므로 키보드·화면 키보드 입력이
         // 모두 카운트·되돌리기에 반영된다. (스크램블은 setup으로 따로 관리)
         let userMoves = [];
+
+        // localStorage 는 사생활 보호 모드 등에서 비어 있거나 예외를 던질 수 있다.
+        // 여기 저장하는 건 전부 "없어도 되는 편의"라 실패하면 기본값으로 간다.
+        function loadPref(key, fallback) {
+            try { const v = localStorage.getItem(key); return v === null ? fallback : v; }
+            catch (_) { return fallback; }
+        }
+        function savePref(key, value) {
+            try { localStorage.setItem(key, value); } catch (_) {}
+        }
 
         // =====================================================================
         //  시점
@@ -568,7 +590,7 @@
         //  그래서 현재 각도를 우리가 직접 들고 있고, 시작값도 명시해서 기준점을 소유한다.
         // =====================================================================
         const DEF_LAT = 34, DEF_LON = 30;
-        const LAT_LIMIT = 80;        // 뒤집혀서 못 알아보는 각도 방지
+        const LAT_LIMIT = 80;        // 뒤집혀서 못 알아보는 각도 방지. twisty 기본 제한(35°)을 여기까지 넓힌다
         const KEY_DEG_PER_SEC = 90;  // 방향키를 누르고 있을 때 속도
         const DRAG_DEG_PER_PX = 0.4; // 드래그 감도
 
@@ -577,22 +599,24 @@
         function setView(lat, lon) {
             viewLat = Math.max(-LAT_LIMIT, Math.min(LAT_LIMIT, lat));
             viewLon = lon;
-            updateFacing();
             if (!ready) return;
             player.cameraLatitude = viewLat;
             player.cameraLongitude = viewLon;
         }
 
         // =====================================================================
-        //  화면 기준 → 큐브 기준 변환
+        //  화면 기준 → 퍼즐 수 변환
         //
         //  친 글자는 "지금 화면에서 보이는 위치"를 뜻한다. 오른쪽에 보이는 면이 R이다.
-        //  그런데 퍼즐의 R은 큐브에 고정된 면이라, 시점을 돌리면 둘이 어긋난다.
-        //  그래서 화면에서 친 글자를 실제 퍼즐 수로 바꿔서 보낸다.
+        //  카메라를 돌리면 퍼즐은 그대로이고 보는 방향만 바뀌므로, 친 글자를 카메라가
+        //  돌아간 만큼 옮겨서 보낸다.
         //
-        //  기본 시점에서 정면은 F이고, 거기서 90도씩 돌 때마다 정면이 F → R → B → L 로 넘어간다.
-        //  위아래는 다루지 않는다 — 위도는 ±80도로 묶여 있어 윗면은 항상 U다.
-        //  y(통째로 좌우 회전)는 큐브 자체를 돌리므로 이동 기록에서 세어 함께 반영한다.
+        //  기본 시점에서 정면은 F이고, 경도가 90도씩 커질 때마다 정면이 F → R → B → L 로
+        //  넘어간다 (화면으로 확인함). 위아래는 다루지 않는다 — 위도가 ±80도로 묶여 있다.
+        //
+        //  y 는 세지 않는다. cubing.js 의 y 는 조각을 통째로 옮기는 수라, y 다음의 R 은
+        //  표준 기호대로 "그때 오른쪽에 와 있는 면"이다. y 뒤에도 화면 오른쪽 = R 이 그대로
+        //  맞는다. (예전엔 y 개수를 더했는데, 그러면 y 뒤의 R 이 뒷면을 돌렸다 — 화면으로 확인함)
         //
         //  경계는 반드시 "기본 시점"을 중심으로 잡는다. 그냥 경도를 90으로 나눠 반올림하면
         //  경계가 45도에 생기는데 기본 시점이 30도라, 16도만 끌어도 기준이 넘어가 버린다.
@@ -600,44 +624,15 @@
         // =====================================================================
         const SIDE = ['F', 'R', 'B', 'L'];
         const FACE_LETTERS = new Set(['R', 'L', 'U', 'D', 'F', 'B']);
-        let yOffset = 0;
 
         function cameraSideIndex() {
             return (((Math.round((viewLon - DEF_LON) / 90) % 4) + 4) % 4);
         }
 
-        // 지금 화면 정면·오른쪽이 실제로 어느 면인지 보여준다.
-        // 기준이 넘어가는 순간 이 표시와 큐브 라벨이 깜빡여서 놓치지 않게 한다.
-        let lastFacingKey = null;
-        function updateFacing() {
-            const idx = cameraSideIndex();
-            const key = idx + '|' + yOffset;
-            if (key === lastFacingKey) return;
-            const front = SIDE[(idx + yOffset) % 4];
-            const right = SIDE[(idx + yOffset + 1) % 4];
-            facingEl.innerHTML = '지금 보이는 정면 = <strong>' + front +
-                                 '</strong>면 · 오른쪽 = <strong>' + right + '</strong>면';
-            if (lastFacingKey !== null) {
-                facingEl.classList.remove('flash'); void facingEl.offsetWidth;
-                facingEl.classList.add('flash');
-                cubeBox.classList.remove('lbflash'); void cubeBox.offsetWidth;
-                cubeBox.classList.add('lbflash');
-            }
-            lastFacingKey = key;
-        }
         function screenToCube(letter) {
             const i = SIDE.indexOf(letter);
             if (i < 0) return letter; // U, D, y 는 좌우 회전과 무관하다
-            return SIDE[(cameraSideIndex() + yOffset + i) % 4];
-        }
-        function countY(moves) {
-            let n = 0;
-            for (const m of moves) {
-                if (m === 'y') n += 1;
-                else if (m === "y'") n -= 1;
-                else if (m === 'y2') n += 2;
-            }
-            return ((n % 4) + 4) % 4;
+            return SIDE[(cameraSideIndex() + i) % 4];
         }
 
         function syncFromAlg(val) {
@@ -646,10 +641,6 @@
             userMoves = s ? s.split(/\s+/) : [];
             countEl.textContent = String(userMoves.length);
             btnUndo.disabled = userMoves.length === 0;
-            // 되돌리기·리셋·섞기로 기록이 바뀌어도 방향이 항상 맞도록 매번 다시 센다
-            yOffset = countY(userMoves);
-            updateFacing();
-            renderDrill();
         }
 
         // --- 방향키: 누르고 있는 동안 계속 회전 ---
@@ -708,24 +699,134 @@
             tweenRaf = requestAnimationFrame(step);
         }
 
-        // --- 드래그로 시점 회전 ---
-        // 면 회전이 마우스에서 완전히 빠졌기 때문에, 드래그는 시점 말고 할 일이 없다.
-        // 그래서 "돌리려다 면이 돌아가는" 오조작이 구조적으로 불가능하다.
-        let dragId = null, dragX = 0, dragY = 0, dragDist = 0;
-        // 공식 연습 중에는 시점을 고정한다. 시점이 돌아가면 친 글자가 다른 면으로
-        // 나가서, 공식과 맞는지 채점할 수가 없다.
-        let viewLocked = false;
+        // =====================================================================
+        //  큐브 위 드래그
+        //
+        //  "끌어서 돌리기"(기본 켜짐): 큐브 위에서 시작한 드래그는 면 회전, 큐브 바깥 여백에서
+        //  시작한 드래그는 시점 회전이 된다. 어느 쪽인지는 누르는 순간 정해지므로 섞이지 않는다.
+        //  여백이 있어야 시점을 돌릴 수 있으므로 켜면 카메라를 조금 물린다(CAM_DIST_DRAG).
+        //
+        //  끄면 드래그 = 시점 회전뿐이다. 면 회전은 키보드로만.
+        //
+        //  cubing.js 에는 드래그로 면을 돌리는 기능이 없다. drag-input 은 카메라 회전이고,
+        //  move-press-input 은 누른 면을 방향 어림으로 돌리는 것뿐이다 (소스로 확인함).
+        //  그래서 화면 좌표에서 광선을 쏴 큐브 상자와 교차시키는 판정을 직접 한다.
+        // =====================================================================
+        const CUBE_HALF = 0.555;     // 3x3x3 PG3D 면 평면의 원점 거리 (experimentalGetControlTargets 로 측정)
+        const CAM_FOV = 20;          // twisty 카메라 세로 시야각. 세로가 더 긴 박스에선 가로 폭에 맞춘다
+        const CAM_DIST = 6.25;       // twisty 기본 카메라 거리
+        const CAM_DIST_DRAG = 6.6;   // 끌어서 돌리기: 큐브를 조금 작게 그려 시점용 여백을 만든다
+        const TURN_PX = 12;          // 이만큼 끌어야 방향을 정한다
+        const RAD = Math.PI / 180;
+
+        let dragTurn = loadPref('pg.dragTurn', '1') === '1';
+
+        // twisty 가 실제로 그린 카메라. 위도 제한·경도 정규화 때문에 우리가 넣은 값과
+        // 다를 수 있어서, 드래그 판정은 모델에서 읽어 둔 이 값으로 한다.
+        let cam = null;
+
+        const vAdd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+        const vScale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+        const vDot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        const vCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+        const vNorm = (a) => vScale(a, 1 / Math.hypot(a[0], a[1], a[2]));
+
+        // twisty 와 같은 카메라를 만든다: three.js Spherical(거리, 90°-위도, 경도), 원점을 바라봄.
+        // 축은 x = R, y = U, z = F.
+        function camera() {
+            const c = cam || { latitude: viewLat, longitude: viewLon, distance: dragTurn ? CAM_DIST_DRAG : CAM_DIST };
+            const phi = (90 - c.latitude) * RAD, th = c.longitude * RAD, d = c.distance;
+            const pos = [d * Math.sin(phi) * Math.sin(th), d * Math.cos(phi), d * Math.sin(phi) * Math.cos(th)];
+            const fwd = vNorm(vScale(pos, -1));
+            const right = vNorm(vCross(fwd, [0, 1, 0]));
+            const up = vCross(right, fwd);
+            const r = player.getBoundingClientRect();
+            const f = (Math.min(r.width, r.height) / 2) / Math.tan(CAM_FOV / 2 * RAD);
+            return { pos, fwd, right, up, f, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+        }
+        function toScreen(c, p) {
+            const v = vAdd(p, vScale(c.pos, -1));
+            const z = vDot(v, c.fwd);
+            return [c.cx + vDot(v, c.right) / z * c.f, c.cy - vDot(v, c.up) / z * c.f];
+        }
+        // 화면 좌표 → 큐브의 어느 면 어느 점을 눌렀는지. 안 맞았으면 null.
+        function pickCube(x, y) {
+            const c = camera(), S = CUBE_HALF, o = c.pos;
+            const d = vNorm(vAdd(c.fwd, vAdd(vScale(c.right, (x - c.cx) / c.f), vScale(c.up, -(y - c.cy) / c.f))));
+            let tmin = -Infinity, tmax = Infinity, axis = -1, sign = 0;
+            for (let k = 0; k < 3; k++) {
+                if (Math.abs(d[k]) < 1e-9) { if (Math.abs(o[k]) > S) return null; continue; }
+                let t1 = (-S - o[k]) / d[k], t2 = (S - o[k]) / d[k], s = -1;
+                if (t1 > t2) { const t = t1; t1 = t2; t2 = t; s = 1; }
+                if (t1 > tmin) { tmin = t1; axis = k; sign = s; }
+                if (t2 < tmax) tmax = t2;
+            }
+            if (axis < 0 || tmin > tmax || tmax < 0) return null;
+            return { c, p: vAdd(o, vScale(d, tmin)), axis, sign };
+        }
+
+        // 축 j 둘레로 양의 방향(오른손 법칙)으로 도는 층의 수 [양, 음].
+        // 바깥 +층(R U F)은 양의 회전이 반시계라 프라임, -층(L D B)은 시계라 그대로.
+        // 가운데 층: M 은 L 을, E 는 D 를, S 는 F 를 따른다.
+        const LAYER_MOVES = [
+            { '1': ["R'", 'R'], '-1': ['L', "L'"], '0': ['M', "M'"] },
+            { '1': ["U'", 'U'], '-1': ['D', "D'"], '0': ['E', "E'"] },
+            { '1': ["F'", 'F'], '-1': ['B', "B'"], '0': ["S'", 'S'] },
+        ];
+        // 누른 점에서 끈 방향 → 수. 면 위의 두 방향 중 화면에서 끈 방향과 더 가까운 쪽을 고르고,
+        // 그 방향으로 점을 움직이는 회전축(면 법선 × 끈 방향)과 누른 점이 속한 층을 찾는다.
+        function dragMove(hit, dx, dy) {
+            const len = Math.hypot(dx, dy);
+            const s0 = toScreen(hit.c, hit.p);
+            let best = null;
+            for (let k = 0; k < 3; k++) {
+                if (k === hit.axis) continue;
+                const q = hit.p.slice(); q[k] += 0.1;
+                const s1 = toScreen(hit.c, q);
+                const sx = s1[0] - s0[0], sy = s1[1] - s0[1], sl = Math.hypot(sx, sy);
+                if (sl < 1e-6) continue;
+                const cos = (sx * dx + sy * dy) / (sl * len);
+                if (!best || Math.abs(cos) > Math.abs(best.cos)) best = { k, cos };
+            }
+            if (!best || Math.abs(best.cos) < 0.5) return null; // 대각선이라 애매하면 돌리지 않는다
+            const n = [0, 0, 0]; n[hit.axis] = hit.sign;
+            const t = [0, 0, 0]; t[best.k] = Math.sign(best.cos);
+            const a = vCross(n, t);
+            const j = a.findIndex(v => Math.abs(v) > 0.5);
+            const q = hit.p[j], third = CUBE_HALF / 3;
+            const layer = q > third ? '1' : q < -third ? '-1' : '0';
+            return LAYER_MOVES[j][layer][a[j] > 0 ? 0 : 1];
+        }
+
+        let viewDragId = null, dragX = 0, dragY = 0, dragDist = 0;   // 시점 드래그
+        let turnId = null, turnHit = null, turnX0 = 0, turnY0 = 0, turnDone = false; // 면 드래그
 
         cubeBox.addEventListener('pointerdown', (e) => {
             cubeBox.focus();
-            if (viewLocked) { dragId = e.pointerId; dragDist = 0; return; }
-            cancelTween();
-            dragId = e.pointerId; dragX = e.clientX; dragY = e.clientY; dragDist = 0;
-            cubeBox.classList.add('dragging');
+            // 새로 누르면 하던 동작은 버린다. pointerup 을 놓친 경우에도 막히지 않게.
+            viewDragId = null; turnId = null; turnHit = null;
+            const hit = (dragTurn && ready) ? pickCube(e.clientX, e.clientY) : null;
+            if (hit) {
+                turnId = e.pointerId; turnHit = hit; turnDone = false;
+                turnX0 = e.clientX; turnY0 = e.clientY;
+            } else {
+                cancelTween();
+                viewDragId = e.pointerId; dragX = e.clientX; dragY = e.clientY; dragDist = 0;
+                cubeBox.classList.add('dragging');
+            }
             try { cubeBox.setPointerCapture(e.pointerId); } catch (_) {}
         });
         cubeBox.addEventListener('pointermove', (e) => {
-            if (dragId !== e.pointerId || viewLocked) return;
+            if (turnId === e.pointerId) {
+                if (turnDone) return;
+                const dx = e.clientX - turnX0, dy = e.clientY - turnY0;
+                if (Math.hypot(dx, dy) < TURN_PX) return;
+                turnDone = true; // 한 번 끌면 한 수
+                const move = dragMove(turnHit, dx, dy);
+                if (move) { clearPending(); doMove(move); }
+                return;
+            }
+            if (viewDragId !== e.pointerId) return;
             const dx = e.clientX - dragX, dy = e.clientY - dragY;
             dragX = e.clientX; dragY = e.clientY;
             dragDist += Math.abs(dx) + Math.abs(dy);
@@ -733,12 +834,13 @@
             setView(viewLat - dy * DRAG_DEG_PER_PX, viewLon + dx * DRAG_DEG_PER_PX);
         });
         function endDrag(e) {
-            if (dragId !== e.pointerId) return;
-            dragId = null;
+            if (turnId === e.pointerId) { turnId = null; turnHit = null; return; }
+            if (viewDragId !== e.pointerId) return;
+            viewDragId = null;
             cubeBox.classList.remove('dragging');
             // 끌지 않고 그냥 눌렀다면 = 큐브를 터치해 본 것.
             // 큐브로는 면을 돌릴 수 없으니 어디를 누르면 되는지 알려준다.
-            if (dragDist < 6) {
+            if (dragDist < 6 && !dragTurn) {
                 kbBox.classList.remove('flash');
                 void kbBox.offsetWidth; // 애니메이션 재시작
                 kbBox.classList.add('flash');
@@ -748,6 +850,15 @@
         cubeBox.addEventListener('pointercancel', endDrag);
         kbBox.addEventListener('animationend', () => kbBox.classList.remove('flash'));
 
+        function setDragTurn(on) {
+            dragTurn = on;
+            btnDragTurn.classList.toggle('on', on);
+            btnDragTurn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            cubeBox.classList.toggle('dragturn', on);
+            if (ready) player.cameraDistance = on ? CAM_DIST_DRAG : CAM_DIST;
+            savePref('pg.dragTurn', on ? '1' : '0');
+        }
+
         // 엘리먼트가 정의(업그레이드)되면 로딩 오버레이 제거 + 버튼 활성화 + 모델 구독
         const readyP = customElements.whenDefined('twisty-player');
         const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000));
@@ -755,30 +866,30 @@
             loading.remove();
             ready = true;
             [btnScramble, btnUndo, btnReset, btnViewReset].forEach(b => b.disabled = false);
-            drillPick.disabled = false;
+            player.cameraLatitudeLimit = LAT_LIMIT;
+            player.cameraDistance = dragTurn ? CAM_DIST_DRAG : CAM_DIST;
             setView(DEF_LAT, DEF_LON);
-            // 모델의 alg 변화를 구독 → 모든 이동이 카운트·되돌리기·방향 계산에 반영됨
+            // 모델의 alg 변화를 구독 → 모든 이동이 카운트·되돌리기에 반영됨
             player.experimentalModel.alg.addFreshListener(syncFromAlg);
+            try {
+                player.experimentalModel.twistySceneModel.orbitCoordinates.addFreshListener(c => { cam = c; });
+            } catch (err) {
+                console.warn('카메라 좌표를 읽지 못해 끌어서 돌리기 판정이 조금 어긋날 수 있습니다.', err);
+            }
         }).catch((err) => {
             loading.textContent = '큐브를 불러오지 못했습니다. 네트워크 연결을 확인하고 새로고침 해주세요.';
             loading.classList.add('error');
             console.error(err);
         });
 
+        // =====================================================================
+        //  수 실행
+        // =====================================================================
         let lastFade = null;
         function doMove(move) {
-            // 공식 연습 중이면 다음에 쳐야 할 수와 다른 건 아예 실행하지 않는다.
-            // 큐브를 망가뜨렸다가 되돌리는 것보다 깔끔하다.
-            if (drill) {
-                const expected = drill.moves[drillStep];
-                if (!expected) return;
-                if (move !== expected) { drillWrong(move, expected); return; }
-                // 단계는 여기서 바로 올린다. alg 리스너는 한 박자 늦게 오기 때문에,
-                // 연달아 빠르게 치면 다음 수가 아직 안 올라간 단계와 비교돼 거부된다.
-                drillStep++;
-            }
             player.experimentalAddMove(move); // 한 수씩 애니메이션(리스너가 카운트 갱신)
             lastMoveEl.textContent = move;
+            lastActEl.textContent = moveAction(move);
             lastEl.classList.add('on');
             if (lastFade) clearTimeout(lastFade);
             lastFade = setTimeout(() => lastEl.classList.remove('on'), 4000);
@@ -790,16 +901,13 @@
             player.alg = userMoves.slice(0, -1).join(" ");
             player.jumpToEnd();
             lastEl.classList.remove('on');
-            if (drill) { drillStep = Math.max(0, drillStep - 1); renderDrill(); }
         }
 
         function resetToSolved() {
-            // 공식 연습 중이면 "처음부터 다시" — 세팅을 지우면 연습이 깨진다
-            player.experimentalSetupAlg = drill ? invertAlg(drill.moves) : "";
+            player.experimentalSetupAlg = "";
             player.alg = "";
             player.jumpToEnd();
             lastEl.classList.remove('on');
-            if (drill) { drillStep = 0; renderDrill(); }
         }
 
         // 워커/솔버 없이 즉시 동작하는 랜덤 무브 스크램블(연습용으로 충분).
@@ -828,7 +936,32 @@
         }
 
         // =====================================================================
-        //  입력: 화면에 보이는 이름을 그대로 친다.
+        //  수를 동작으로 읽기
+        //
+        //  "R'" 대신 "오른쪽 면 ↓". 화살표는 정면에서 볼 때 앞 모서리가 움직이는 방향이라
+        //  손 배치의 "위 칸 = 앞 모서리가 올라감" 규칙과 같다. 앞면·뒷면은 앞 모서리가 없어서
+        //  앞에서 볼 때의 회전 방향(↻ ↺)으로 적는다.
+        // =====================================================================
+        const MOVE_RX = /^([RLUDFBMESxyz])(w?)(2|')?$/;
+        const ACTION = {
+            R: ['오른쪽 면', '↑'], L: ['왼쪽 면', '↓'], U: ['윗면', '←'], D: ['아랫면', '→'],
+            F: ['앞면', '↻'], B: ['뒷면', '↺'],
+            M: ['가운데 세로층', '↓'], E: ['가운데 가로층', '→'], S: ['가운데 앞뒤층', '↻'],
+            x: ['큐브 통째로', '↑'], y: ['큐브 통째로', '←'], z: ['큐브 통째로', '↻'],
+        };
+        const WIDE_NAME = { R: '오른쪽 두 층', L: '왼쪽 두 층', U: '위 두 층', D: '아래 두 층', F: '앞 두 층', B: '뒤 두 층' };
+        const FLIP = { '↑': '↓', '↓': '↑', '←': '→', '→': '←', '↻': '↺', '↺': '↻' };
+        function moveAction(move) {
+            const m = move.match(MOVE_RX);
+            if (!m) return '';
+            const [, base, wide, suf] = m;
+            const name = wide ? WIDE_NAME[base] : ACTION[base][0];
+            const arrow = suf === "'" ? FLIP[ACTION[base][1]] : ACTION[base][1];
+            return name + ' ' + arrow + (suf === '2' ? ' ×2' : '') + (base === 'B' ? ' (앞에서 볼 때)' : '');
+        }
+
+        // =====================================================================
+        //  입력 ① 기호 배치: 화면에 보이는 이름을 그대로 친다.
         //
         //  글자를 누르면 바로 돌리지 않고 "입력 중"으로 잡아둔다. R2나 Rw처럼
         //  뒤에 붙는 기호가 있을 수 있기 때문이다. 아래 중 하나가 오면 확정된다.
@@ -912,6 +1045,47 @@
         }
 
         // =====================================================================
+        //  입력 ② 손 배치: 키 하나 = 완성된 수 하나. 접미사·대기 없이 누르는 즉시 돈다.
+        //
+        //  R은 오른손, L은 왼손 — 실제 큐브에서 그 면을 돌리는 손이다. 같은 면의 두 방향은
+        //  같은 손가락의 위 칸·아래 칸이고, 위 칸은 앞 모서리가 올라가는 방향이다(i=R, e=L').
+        //  양손이 다 닿는 면(U D F B)은 두 방향을 양손에 하나씩 준다.
+        //  180°는 같은 키 두 번(기록에도 두 수로 남는다), 두 층은 Shift + 키.
+        //  글자는 화면 기준이라 screenToCube 를 거친다. 값: [화면 글자, 접미사]
+        // =====================================================================
+        const HAND = {
+            KeyJ: ['U', ''],  KeyF: ['U', "'"],
+            KeyI: ['R', ''],  KeyK: ['R', "'"],
+            KeyD: ['L', ''],  KeyE: ['L', "'"],
+            KeyH: ['F', ''],  KeyG: ['F', "'"],
+            KeyS: ['D', ''],  KeyL: ['D', "'"],
+            KeyW: ['B', ''],  KeyO: ['B', "'"],
+            Semicolon: ['y', ''], KeyA: ['y', "'"],
+        };
+
+        function handMove(code, wide) {
+            const [letter, suffix] = HAND[code];
+            if (letter === 'y') return 'y' + suffix;
+            return screenToCube(letter) + (wide ? 'w' : '') + suffix;
+        }
+
+        let layout = loadPref('pg.layout', 'notation') === 'hand' ? 'hand' : 'notation';
+        const layoutBtns = kbBox.querySelectorAll('.seg[data-layout]');
+
+        function setLayout(l) {
+            layout = l;
+            sectionEl.dataset.layout = l; // 화면 키보드·안내문이 CSS 로 함께 바뀐다
+            layoutBtns.forEach(b => {
+                const on = b.dataset.layout === l;
+                b.classList.toggle('on', on);
+                b.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+            clearPending();
+            setShiftArmed(false);
+            savePref('pg.layout', l);
+        }
+
+        // =====================================================================
         //  진짜 키보드
         //  키는 e.key가 아니라 e.code로 읽는다. 한글 입력 모드에서는 e.key가
         //  자모나 'Process'로 들어와서 깨지기 때문이다.
@@ -928,23 +1102,33 @@
             'Enter': 'Enter', ' ': 'Space', 'Escape': 'Escape', 'Backspace': 'Backspace',
             'Delete': 'Delete', 'Home': 'Home', 'ArrowLeft': 'ArrowLeft',
             'ArrowRight': 'ArrowRight', 'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
+            "'": 'Quote', '"': 'Quote', ';': 'Semicolon', ':': 'Semicolon',
         };
         function codeOf(e) {
             if (e.code) return e.code;
             const key = e.key;
             if (!key) return '';
+            if (NAMED[key]) return NAMED[key];
             if (key.length === 1) {
-                if (key === "'") return 'Quote';
                 const c = key.toUpperCase();
                 if (c >= 'A' && c <= 'Z') return 'Key' + c;
                 if (c >= '0' && c <= '9') return 'Digit' + c;
             }
-            return NAMED[key] || '';
+            return '';
         }
 
+        // 같은 data-code 가 두 배치에 다 있을 수 있다(KeyD = 기호 배치의 D, 손 배치의 L).
+        // 숨겨진 쪽을 집으면 반짝임·힌트가 안 보이므로 지금 배치에서 보이는 것만 고른다.
+        function keyEl(code) {
+            for (const el of kbBox.querySelectorAll('[data-code="' + code + '"]')) {
+                const only = el.closest('[data-only]');
+                if (!only || only.dataset.only === layout) return el;
+            }
+            return null;
+        }
         // 진짜 키를 누르면 화면 키보드의 같은 키가 반짝인다
         function blink(code) {
-            const el = kbBox.querySelector('[data-code="' + code + '"]');
+            const el = keyEl(code);
             if (!el) return;
             el.classList.add('down');
             setTimeout(() => el.classList.remove('down'), 130);
@@ -967,16 +1151,14 @@
             if (ARROWS.includes(code)) {
                 e.preventDefault();          // 페이지 스크롤 차단
                 if (e.repeat) return;        // 키 반복은 무시(회전은 rAF가 맡는다)
-                if (viewLocked) return;
                 heldKeys.add(code);
-                const el = kbBox.querySelector('[data-code="' + code + '"]');
+                const el = keyEl(code);
                 if (el) el.classList.add('down');
                 startSpin();
                 return;
             }
             if (code === 'Home' || code === 'Digit0' || code === 'Numpad0') {
                 e.preventDefault();
-                if (viewLocked) return;
                 blink('Digit0'); stopAllSpin(); tweenToDefault(); return;
             }
 
@@ -995,23 +1177,35 @@
             if (code === 'Escape') { blink('Escape'); clearPending(); return; }
             if (code === 'Backspace') { e.preventDefault(); blink('Backspace'); inputBack(); return; }
 
-            // --- 접미사 ' (프라임): 수가 완성되므로 그 자리에서 실행 ---
+            // --- 손 배치: 키 하나 = 수 하나 ---
+            if (layout === 'hand') {
+                if (!HAND[code]) return;
+                e.preventDefault();
+                if (e.repeat) return; // 누르고 있으면 계속 돌아버린다
+                blink(code);
+                if (e.shiftKey) blink('ShiftLeft');
+                doMove(handMove(code, e.shiftKey));
+                return;
+            }
+
+            // --- 이하 기호 배치 ---
+            // 접미사 ' (프라임): 수가 완성되므로 그 자리에서 실행
             if (code === 'Quote') {
                 if (pBase) { e.preventDefault(); blink('Quote'); inputSuffix('prime'); }
                 return;
             }
-            // --- 접미사 2 (180도) ---
+            // 접미사 2 (180도)
             if (code === 'Digit2' || code === 'Numpad2') {
                 if (pBase) { e.preventDefault(); blink('Digit2'); inputSuffix('double'); }
                 return;
             }
-            // --- w: 확정이 아니라 확장 (R → Rw) ---
+            // w: 확정이 아니라 확장 (R → Rw)
             if (code === 'KeyW') {
                 if (pBase) { e.preventDefault(); blink('KeyW'); inputWide(); }
                 return;
             }
 
-            // --- 면 글자 / y ---
+            // 면 글자 / y
             const letter = LETTERS[code];
             if (!letter) return;
             e.preventDefault();
@@ -1022,9 +1216,8 @@
 
         function onKeyUp(e) {
             const code = codeOf(e);
-            if (ARROWS.includes(code)) {
-                heldKeys.delete(code);
-                const el = kbBox.querySelector('[data-code="' + code + '"]');
+            if (ARROWS.includes(code) && heldKeys.delete(code)) {
+                const el = keyEl(code);
                 if (el) el.classList.remove('down');
             }
         }
@@ -1036,29 +1229,29 @@
         //  화면 키보드 (클릭해도 실행된다)
         // =====================================================================
         let shiftArmed = false;
-        const shiftKey = kbBox.querySelector('[data-mod="shift"]');
+        const shiftKeys = kbBox.querySelectorAll('[data-mod="shift"]');
 
+        // 기호 배치에선 Shift = 반대 방향, 손 배치에선 Shift = 두 층. 키캡 설명도 배치마다 다르다.
         function setShiftArmed(on) {
             shiftArmed = on;
-            shiftKey.classList.toggle('armed', on);
+            shiftKeys.forEach(k => k.classList.toggle('armed', on));
         }
 
         kbBox.querySelectorAll('.kbkey').forEach(btn => {
-            const face = btn.dataset.face;
-            const suffix = btn.dataset.suffix;
-            const view = btn.dataset.view;
-            const act = btn.dataset.act;
+            const { face, suffix, view, act, hand } = btn.dataset;
 
             // 시점 키만 누르고 있는 동안 계속 돌아간다
             if (view) {
                 const start = (e) => {
                     e.preventDefault();
-                    if (viewLocked) return;
                     btn.classList.add('down');
                     heldKeys.add(view);
                     startSpin();
                 };
-                const stop = () => { btn.classList.remove('down'); heldKeys.delete(view); };
+                const stop = () => {
+                    if (!heldKeys.delete(view)) return;
+                    btn.classList.remove('down');
+                };
                 btn.addEventListener('pointerdown', start);
                 btn.addEventListener('pointerup', stop);
                 btn.addEventListener('pointerleave', stop);
@@ -1069,6 +1262,12 @@
             btn.addEventListener('click', () => {
                 btn.blur(); // 포커스가 남으면 확정용 Enter가 이 버튼을 다시 누른다
                 if (btn.dataset.mod === 'shift') { setShiftArmed(!shiftArmed); return; }
+                if (hand) {
+                    const wide = shiftArmed;
+                    if (shiftArmed) setShiftArmed(false);
+                    doMove(handMove(hand, wide));
+                    return;
+                }
                 if (face) {
                     inputFace(face, shiftArmed);
                     if (shiftArmed) setShiftArmed(false);
@@ -1080,134 +1279,11 @@
                 if (act === 'cancel') { clearPending(); return; }
                 if (act === 'back') { inputBack(); return; }
                 if (act === 'reset') { clearPending(); resetToSolved(); return; }
-                if (act === 'viewreset') { if (!viewLocked) { stopAllSpin(); tweenToDefault(); } return; }
+                if (act === 'viewreset') { stopAllSpin(); tweenToDefault(); return; }
             });
         });
 
-        // =====================================================================
-        //  공식 연습 (최소 구성)
-        //
-        //  공식의 역순을 시작 상태로 깔아두면, 공식을 그대로 치는 순간 풀린다.
-        //  "이 상황에서 이 공식을 쓴다"는 감각까지 같이 잡힌다.
-        //  다음에 쳐야 할 수를 강조하고, 다른 수는 doMove에서 아예 막는다.
-        // =====================================================================
-        const DRILLS = [
-            { name: '1층 코너 · 흰색이 오른쪽',      alg: "R U R'" },
-            { name: '1층 코너 · 흰색이 앞쪽',        alg: "F' U' F" },
-            { name: '1층 코너 · 흰색이 위',          alg: "R U2 R' U' R U R'" },
-            { name: '1층 코너 · 뒤집혀 박힘',        alg: "R U R' U' R U R'" },
-            { name: '2층 엣지 · 오른쪽으로',         alg: "U R U' R' U' F' U F" },
-            { name: '2층 엣지 · 왼쪽으로',           alg: "U' L' U L U F U' F'" },
-            { name: '노란 십자가 · 일자형 ( - )',    alg: "F R U R' U' F'" },
-            { name: '노란 십자가 · 기역자형 ( ㄱ )', alg: "Fw R U R' U' Fw'" },
-            { name: 'PLL · 코너 맞추기',             alg: "R U R' U' R' F R2 U' R' U' R U R' F'" },
-            { name: 'PLL · 엣지 3개 돌리기',         alg: "R U' R U R U R U' R' U' R2" },
-        ];
-
-        let drill = null;
-        // 지금 몇 번째 수까지 맞게 쳤는지. alg 리스너는 늦게 오므로 여기서 직접 센다.
-        // 줄어드는 경로는 되돌리기와 리셋뿐이고, 둘 다 그 자리에서 맞춰준다.
-        let drillStep = 0;
-
-        function invertMove(m) {
-            if (m.endsWith('2')) return m;                 // R2 의 역은 R2
-            if (m.endsWith("'")) return m.slice(0, -1);    // R' 의 역은 R
-            return m + "'";                                // R 의 역은 R'
-        }
-        function invertAlg(moves) {
-            return moves.slice().reverse().map(invertMove).join(' ');
-        }
-
-        DRILLS.forEach((d, i) => {
-            const opt = document.createElement('option');
-            opt.value = String(i);
-            opt.textContent = d.name + '  (' + d.alg + ')';
-            drillPick.appendChild(opt);
-        });
-
-        function clearKeyHints() {
-            kbBox.querySelectorAll('.kbkey.hint').forEach(k => k.classList.remove('hint'));
-        }
-        // 다음에 쳐야 할 수에 필요한 키를 화면 키보드에서 빛나게 한다
-        function hintKeysFor(move) {
-            clearKeyHints();
-            const m = move.match(/^([RLUDFBxyz])(w?)(2|')?$/);
-            if (!m) return;
-            const map = { R: 'KeyR', L: 'KeyL', U: 'KeyU', D: 'KeyD', F: 'KeyF', B: 'KeyB', y: 'KeyY' };
-            const codes = [map[m[1]]];
-            if (m[2]) codes.push('KeyW');
-            if (m[3] === "'") codes.push('Quote');
-            if (m[3] === '2') codes.push('Digit2');
-            codes.forEach(c => {
-                const el = kbBox.querySelector('[data-code="' + c + '"]');
-                if (el) el.classList.add('hint');
-            });
-        }
-
-        function renderDrill() {
-            if (!drill) return;
-            const step = drillStep;
-            drillSeq.innerHTML = drill.moves
-                .map((m, i) => '<span class="dm ' + (i < step ? 'done' : i === step ? 'now' : '') + '">' + m + '</span>')
-                .join('');
-            if (step >= drill.moves.length) {
-                drillMsg.className = 'drill-msg done';
-                drillMsg.textContent = '✅ 완성! 같은 공식을 다시 하려면 ↺ 리셋, 다른 공식은 위에서 고르세요.';
-                clearKeyHints();
-            } else {
-                drillMsg.className = 'drill-msg';
-                drillMsg.textContent = '다음에 칠 수: ' + drill.moves[step] +
-                                       '  (' + (step + 1) + '/' + drill.moves.length + ')';
-                hintKeysFor(drill.moves[step]);
-            }
-        }
-
-        function drillWrong(got, expected) {
-            drillMsg.className = 'drill-msg bad';
-            drillMsg.textContent = '❌ ' + got + ' 말고 ' + expected + ' 입니다. (돌리지 않았어요)';
-        }
-
-        function startDrill(i) {
-            const d = DRILLS[i];
-            drill = { name: d.name, moves: d.alg.split(/\s+/) };
-            drillStep = 0;
-            viewLocked = true;
-            stopAllSpin();
-            clearPending();
-            setView(DEF_LAT, DEF_LON);           // 공식은 이 방향을 전제로 한다
-            player.experimentalSetupAlg = invertAlg(drill.moves); // 공식을 치면 풀리는 상태
-            player.alg = "";
-            player.jumpToEnd();
-            lastEl.classList.remove('on');
-            drillBody.hidden = false;
-            drillStop.hidden = false;
-            btnScramble.disabled = true;         // 섞으면 세팅이 날아간다
-            btnViewReset.disabled = true;
-            renderDrill();
-        }
-
-        function stopDrill() {
-            drill = null;
-            viewLocked = false;
-            clearPending();
-            clearKeyHints();
-            drillBody.hidden = true;
-            drillStop.hidden = true;
-            drillPick.value = '';
-            btnScramble.disabled = false;
-            btnViewReset.disabled = false;
-            player.experimentalSetupAlg = "";
-            player.alg = "";
-            player.jumpToEnd();
-        }
-
-        drillPick.addEventListener('change', () => {
-            const v = drillPick.value;
-            drillPick.blur();                    // 포커스가 남으면 키 입력을 먹는다
-            if (v === '') { stopDrill(); return; }
-            startDrill(Number(v));
-        });
-        drillStop.addEventListener('click', () => { drillStop.blur(); stopDrill(); });
+        layoutBtns.forEach(b => b.addEventListener('click', () => { b.blur(); setLayout(b.dataset.layout); }));
 
         // ----- 나머지 버튼 배선 -----
         // 클릭 후 blur: 포커스가 버튼에 남아 있으면 확정용 Enter/Space가 그 버튼을
@@ -1219,10 +1295,86 @@
         wire(btnUndo,     () => { clearPending(); undo(); });
         wire(btnReset,    () => { clearPending(); resetToSolved(); });
         wire(btnViewReset, () => { stopAllSpin(); tweenToDefault(); });
-        wire(btnLabels, () => {
-            const off = cubeBox.classList.toggle('labels-off');
-            btnLabels.classList.toggle('on', !off);
-        });
+        wire(btnDragTurn, () => setDragTurn(!dragTurn));
+
+        // =====================================================================
+        //  공식 서랍 (보기만)
+        //
+        //  기존 화면은 건드리지 않고 오른쪽 끝에서 밀려 나와 위에 겹친다.
+        //  공식은 tutorial.html 을 읽어서 가져온다. 두 군데 적어 두면 한쪽만 고쳐져서 어긋난다.
+        //  읽는 규칙: .step-block 마다 .step-badge / .step-title, 공식은 .case-tab 의
+        //  data-alg (탭 글자가 상황 이름). 탭이 없는 단계(Step 6)는 .used-notation-box strong.
+        // =====================================================================
+        const algDrawer = document.getElementById('alg-drawer');
+        const algHandle = document.getElementById('alg-handle');
+        const algClose = document.getElementById('alg-close');
+        const algPanel = document.getElementById('alg-panel');
+        const algList = document.getElementById('alg-list');
+        let algsLoaded = false;
+
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text) node.textContent = text;
+            return node;
+        }
+        function renderStep(step) {
+            const det = el('details', 'alg-step');
+            det.open = true;
+            const sum = el('summary');
+            sum.append(el('span', 'badge', step.badge), el('span', '', step.title));
+            det.append(sum);
+            for (const c of step.cases) {
+                const item = el('div', 'alg-item');
+                if (c.name) item.append(el('div', 'nm', c.name));
+                item.append(el('div', 'mv', c.alg));
+                det.append(item);
+            }
+            return det;
+        }
+        async function loadAlgs() {
+            if (algsLoaded) return;
+            algsLoaded = true;
+            try {
+                // 튜토리얼을 고친 뒤 옛 공식이 보이지 않게 매번 서버에 확인한다
+                const res = await fetch('tutorial.html', { cache: 'no-cache' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+                const steps = [...doc.querySelectorAll('.step-block')].map(block => {
+                    let cases = [...block.querySelectorAll('.case-tab[data-alg]')]
+                        .map(t => ({ name: t.textContent.trim(), alg: t.dataset.alg }));
+                    if (!cases.length) {
+                        const s = block.querySelector('.used-notation-box strong');
+                        if (s) cases = [{ name: '', alg: s.textContent.trim() }];
+                    }
+                    return {
+                        badge: block.querySelector('.step-badge')?.textContent.trim() || '',
+                        title: block.querySelector('.step-title')?.textContent.trim() || '',
+                        cases,
+                    };
+                }).filter(s => s.cases.length);
+                if (!steps.length) throw new Error('tutorial.html 에서 공식을 찾지 못함');
+                algList.replaceChildren(...steps.map(renderStep));
+            } catch (err) {
+                algsLoaded = false; // 다음에 열 때 다시 시도
+                algList.innerHTML = '<p class="alg-msg">공식을 불러오지 못했어요. ' +
+                    '<a href="tutorial.html" class="highlight-cyan">7단계 해법</a>에서 볼 수 있습니다.</p>';
+                console.error(err);
+            }
+        }
+        function setAlgDrawer(open) {
+            algDrawer.classList.toggle('open', open);
+            algHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            algPanel.inert = !open; // 닫혀 있을 땐 화면 밖 링크·버튼에 Tab 이 가지 않게
+            savePref('pg.algsOpen', open ? '1' : '0');
+            if (open) loadAlgs();
+        }
+        wire(algHandle, () => setAlgDrawer(!algDrawer.classList.contains('open')));
+        wire(algClose, () => setAlgDrawer(false));
+        setAlgDrawer(loadPref('pg.algsOpen', '0') === '1');
+
+        setLayout(layout);
+        setDragTurn(dragTurn);
     </script>
 </body>
 </html>
