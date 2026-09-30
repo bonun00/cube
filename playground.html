@@ -684,6 +684,7 @@
         // =====================================================================
         const SIDE = ['F', 'R', 'B', 'L'];
         const FACE_LETTERS = new Set(['R', 'L', 'U', 'D', 'F', 'B']);
+        const FLIP_MOVE = 'x2'; // x 키: 큐브를 통째로 위아래로 뒤집기 (이동 수에서는 뺀다)
 
         function cameraSideIndex() {
             return (((Math.round((viewLon - DEF_LON) / 90) % 4) + 4) % 4);
@@ -699,7 +700,9 @@
             const alg = (val && val.alg) ? val.alg : val;
             const s = alg ? alg.toString().trim() : "";
             userMoves = s ? s.split(/\s+/) : [];
-            countEl.textContent = String(userMoves.length);
+            // 뒤집기(x2)는 푸는 수가 아니라 잡는 방향을 바꾸는 것이라 이동 수에서 뺀다.
+            // 기록에는 남으므로 되돌리기로 취소할 수 있다.
+            countEl.textContent = String(userMoves.filter(m => m !== FLIP_MOVE).length);
             btnUndo.disabled = userMoves.length === 0;
         }
 
@@ -1202,6 +1205,17 @@
             }
             if (code === 'Escape') { blink('Escape'); clearPending(); return; }
             if (code === 'Backspace') { e.preventDefault(); blink('Backspace'); inputBack(); return; }
+
+            // --- 뒤집기: x 한 번 = 큐브를 통째로 위아래 180° (x2). 두 배치 모두 비어 있는 키 ---
+            // 튜토리얼 Step 3 의 "흰 면을 바닥으로"와 같은 동작(튜토리얼 큐브도 x2 로 뒤집혀 있다).
+            // cubing.js 의 x2 는 조각을 옮기는 수라 뒤집은 뒤에도 "화면 오른쪽 = R" 이 그대로 맞는다.
+            if (code === 'KeyX') {
+                e.preventDefault();
+                if (e.repeat) return;
+                if (pBase) commit(); // 치던 수는 먼저 확정
+                doMove(FLIP_MOVE);
+                return;
+            }
 
             // --- 손 배치: 키 하나 = 수 하나 ---
             if (layout === 'hand') {
