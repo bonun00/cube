@@ -54,6 +54,125 @@
         }
         .pg-loading.error { color: var(--accent-yellow); text-align: center; padding: 20px; }
 
+        /* ===== 완성 축하 (섞기 후 다 맞췄을 때) =====
+           메시지는 큐브 상자 위쪽에 뜨고 클릭을 막지 않는다. 색종이는 화면 전체 캔버스. */
+        .pg-solved {
+            position: absolute; top: 16px; left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 22px; border-radius: 30px;
+            background-color: rgba(8, 10, 16, 0.82);
+            border: 1px solid rgba(0, 240, 255, 0.55);
+            box-shadow: 0 0 24px rgba(0, 240, 255, 0.35);
+            color: var(--text-main); font-size: 1.05rem; font-weight: 700;
+            white-space: nowrap; pointer-events: none;
+            animation: pg-solved-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+        }
+        .pg-solved strong { color: var(--accent-cyan); font-family: monospace; font-size: 1.1rem; }
+        .pg-solved.out { opacity: 0; transition: opacity 0.6s ease; }
+        @keyframes pg-solved-in {
+            from { opacity: 0; transform: translate(-50%, -10px) scale(0.85); }
+            to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        .pg-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 800; }
+
+        /* 기록 세우기 중 흐르는 시간 — 큐브 바로 밑 */
+        .pg-timer {
+            font-family: monospace; font-weight: 700; font-size: 2.2rem; line-height: 1.1;
+            color: var(--accent-cyan); letter-spacing: 0.03em;
+            text-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+        }
+        .pg-timer.waiting {
+            font-family: var(--font-family); font-size: 0.95rem; font-weight: 400;
+            color: var(--text-muted); text-shadow: none;
+        }
+
+        /* ===== 기록 세우기 순위 서랍 (왼쪽) — 오른쪽 공식 서랍의 거울 ===== */
+        .rank-drawer {
+            position: fixed; top: 64px; left: 0; bottom: 0;   /* 64px = 고정 메뉴바 높이 */
+            width: min(280px, 86vw);
+            z-index: 900;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+        }
+        .rank-drawer.open { transform: none; }
+        .rank-handle {
+            position: absolute; left: 100%; top: 38%;
+            writing-mode: vertical-rl;
+            padding: 14px 7px;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0, 240, 255, 0.35); border-left: none;
+            border-radius: 0 10px 10px 0;
+            color: var(--accent-cyan);
+            font-family: var(--font-family); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em;
+            cursor: pointer;
+            box-shadow: 4px 0 14px rgba(0, 0, 0, 0.35);
+        }
+        .rank-handle:hover { background-color: rgba(0, 240, 255, 0.12); }
+        .rank-panel {
+            height: 100%; overflow-y: auto; overscroll-behavior: contain;
+            background-color: var(--surface-color);
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 10px 0 28px rgba(0, 0, 0, 0.5);
+            padding: 16px 14px 32px;
+            text-align: left;
+        }
+        .rk-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .rk-head h3 { margin: 0; font-size: 1rem; color: var(--accent-cyan); }
+        .rk-sub { margin: 18px 0 0; font-size: 0.82rem; color: var(--text-muted); font-weight: 700; }
+        .rk-close, .rk-rename {
+            background: none; color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+            padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-family: var(--font-family);
+        }
+        .rk-close:hover, .rk-rename:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .rk-rename { margin-top: 10px; }
+        .rk-desc { margin: 6px 0 12px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; word-break: keep-all; }
+        .rk-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .rk-start {
+            background-color: var(--accent-cyan); color: var(--bg-color);
+            border: none; border-radius: 22px; padding: 9px 20px;
+            font-family: var(--font-family); font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+        }
+        .rk-start:hover { box-shadow: 0 0 22px rgba(0, 240, 255, 0.55); }
+        .rk-me { font-size: 0.85rem; color: var(--text-main); }
+        .rk-me strong { color: var(--accent-cyan); font-family: monospace; }
+        .rk-status { margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); word-break: keep-all; min-height: 1.2em; }
+        .rk-status.good { color: var(--accent-cyan); font-weight: 700; }
+        .rk-status.bad { color: var(--accent-yellow); }
+        .rk-nick { display: flex; gap: 8px; margin-top: 10px; }
+        .rk-nick[hidden] { display: none; }
+        .rk-nick input {
+            flex: 1; min-width: 0;
+            background-color: rgba(255, 255, 255, 0.06); color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
+            padding: 8px 10px; font-family: var(--font-family); font-size: 0.9rem;
+        }
+        .rk-nick input:focus { outline: none; border-color: var(--accent-cyan); }
+        .rk-nick button {
+            background-color: rgba(0, 240, 255, 0.12); color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan); border-radius: 8px;
+            padding: 8px 14px; font-family: var(--font-family); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+        }
+        .rk-list { list-style: none; margin: 8px 0 0; padding: 0; }
+        .rk-list li {
+            display: grid; grid-template-columns: 1.8em minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline;
+            padding: 7px 6px; border-radius: 8px; font-size: 0.86rem;
+        }
+        .rk-list li:nth-child(odd) { background-color: rgba(255, 255, 255, 0.03); }
+        .rk-list li.me { background-color: rgba(0, 240, 255, 0.12); }
+        .rk-list .no { font-family: monospace; color: var(--text-muted); text-align: right; }
+        .rk-list li:nth-child(1) .no { color: #ffd500; }
+        .rk-list li:nth-child(2) .no { color: #cfd6e4; }
+        .rk-list li:nth-child(3) .no { color: #ff9f4a; }
+        .rk-list .nm { color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rk-list .tm { font-family: monospace; font-weight: 700; color: var(--accent-cyan); }
+        .rk-list .mv { font-size: 0.78rem; color: var(--text-muted); }
+        .rk-list .rk-empty { display: block; color: var(--text-muted); text-align: center; background: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .pg-solved { animation: none; }
+        }
+
         .pg-viewbar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         .pg-viewbar button {
             background-color: rgba(255, 255, 255, 0.04);
@@ -336,6 +455,7 @@
                 grid-template-columns: minmax(170px, 1fr) minmax(0, 600px) minmax(170px, 1fr);
                 grid-template-areas:
                     "left cube    right"
+                    ".    timer   ."
                     ".    bar     ."
                     ".    io      ."
                     ".    status  ."
@@ -345,6 +465,7 @@
                 justify-items: center;
             }
             #pg-cube      { grid-area: cube; }
+            .pg-timer     { grid-area: timer; }
             .pg-viewbar   { grid-area: bar; }
             .pg-io        { grid-area: io; }
             .pg-status    { grid-area: status; }
@@ -416,6 +537,7 @@
             .pg-wrap {
                 grid-template-areas:
                     "left cube    right"
+                    ".    timer   ."
                     ".    touch   ."
                     ".    bar     ."
                     ".    io      ."
@@ -473,7 +595,12 @@
                     control-panel="none"
                     background="none"></twisty-player>
                 <div id="pg-loading" class="pg-loading">3D 큐브 불러오는 중…</div>
+                <!-- 섞기 후 다 맞추면 뜨는 축하 메시지 -->
+                <div id="pg-solved" class="pg-solved" aria-live="polite" hidden></div>
             </div>
+
+            <!-- 기록 세우기 중 흐르는 시간: 큐브 바로 밑 -->
+            <div id="pg-timer" class="pg-timer" hidden></div>
 
             <!-- 폰용 기호 버튼: 손가락 기기에서만 큐브 바로 아래에 보이고, 화면 키보드는 숨는다 -->
             <details class="pg-touchpad" id="pg-touchpad" open>
@@ -606,6 +733,30 @@
             </div>
         </div>
     </section>
+
+    <!-- 기록 세우기 순위표: 공식 서랍의 거울 — 왼쪽에서 밀려 나온다. 역대 최고 기록 순위 -->
+    <aside class="rank-drawer" id="rank-drawer" aria-label="기록 순위">
+        <button type="button" class="rank-handle" id="rank-handle" aria-expanded="false" aria-controls="rank-panel">🏆 기록</button>
+        <div class="rank-panel" id="rank-panel">
+            <div class="rk-head">
+                <h3>🏆 기록 세우기</h3>
+                <button type="button" class="rk-close" id="rk-close" aria-label="순위표 닫기">✕</button>
+            </div>
+            <p class="rk-desc">도전할 때마다 새로 섞어요. 여러 번 도전할 수 있고, 가장 빠른 기록이 역대 순위에 남아요.</p>
+            <div class="rk-actions">
+                <button type="button" class="rk-start" id="rk-start">▶ 도전하기</button>
+                <span class="rk-me" id="rk-me"></span>
+            </div>
+            <div class="rk-status" id="rk-status" aria-live="polite"></div>
+            <form class="rk-nick" id="rk-nick" hidden>
+                <input type="text" id="rk-nick-input" maxlength="12" placeholder="닉네임 (2~12자)" autocomplete="nickname" aria-label="닉네임">
+                <button type="submit">기록 올리기</button>
+            </form>
+            <h4 class="rk-sub">역대 순위</h4>
+            <ol class="rk-list" id="rk-list"></ol>
+            <button type="button" class="rk-rename" id="rk-rename" hidden>닉네임 바꾸기</button>
+        </div>
+    </aside>
 
     <!-- 공식 서랍: 기존 화면 위로 오른쪽에서 밀려 나온다. 공식은 tutorial.html 에서 읽어 온다 -->
     <aside class="alg-drawer" id="alg-drawer" aria-label="공식 모음">
@@ -969,6 +1120,12 @@
         // =====================================================================
         function doMove(move) {
             player.experimentalAddMove(move); // 한 수씩 애니메이션(리스너가 카운트 갱신)
+            if (solveArmed) {
+                const now = performance.now();
+                if (solveStart === null) { solveStart = now; renderChallengeState(); } // 섞은 뒤 첫 수부터 잰다
+                lastMoveAt = now;
+                checkSolved();
+            }
         }
 
         function undo() {
@@ -982,10 +1139,15 @@
             player.experimentalSetupAlg = "";
             player.alg = "";
             player.jumpToEnd();
+            solveArmed = false; // 리셋으로 완성된 건 푼 게 아니다
+            challenge = false;
+            hideSolved();
+            renderChallengeState();
         }
 
         // 워커/솔버 없이 즉시 동작하는 랜덤 무브 스크램블(연습용으로 충분).
         // 같은 면 연속·같은 축 3연속을 피해 자연스러운 섞임을 만든다.
+        // 기록 세우기의 섞기는 서버(supabase/functions/records)가 같은 규칙으로 따로 낸다.
         function randomScramble(len = 22) {
             const faces = ["U", "D", "L", "R", "F", "B"];
             const suffix = ["", "'", "2"];
@@ -1006,6 +1168,127 @@
             player.experimentalSetupAlg = randomScramble(); // 시작 상태 = 스크램블
             player.alg = "";
             player.jumpToEnd();
+            solveArmed = true;
+            solveStart = null;
+            challenge = false; // 평소 섞기는 연습용 — 기록을 올리지 않는다
+            hideSolved();
+            renderChallengeState();
+        }
+
+        // =====================================================================
+        //  완성 축하
+        //
+        //  섞기 후 사용자가 돌려서 다 맞췄을 때 한 번만: 색종이 + 큐브 한 바퀴 + "완성! N수 · 시간".
+        //  리셋·되돌리기로 완성된 건 축하하지 않고(검사는 doMove 에서만), 맞춘 뒤 R R' 처럼
+        //  흐트렸다 되돌려도 다시 안 한다(축하하면 solveArmed 를 끈다).
+        //  완성 판정은 큐브를 든 방향을 무시한다 — 뒤집기(x2)·y·가운데 층 끌기로 센터가
+        //  옮겨 간 채로 맞춰도 완성이다(cubing.js experimentalIsSolved).
+        // =====================================================================
+        let solveArmed = false;   // 섞기 후 아직 축하 전
+        let solveStart = null;    // 섞은 뒤 첫 수를 둔 시각
+        let lastMoveAt = null;    // 마지막 수를 둔 시각 — 기록 = 마지막 수 - 첫 수
+        let challenge = false;    // 기록 세우기 도전 중인가
+        let solvedFade = null;
+        const solvedEl = document.getElementById('pg-solved');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        async function checkSolved() {
+            const m = player.experimentalModel;
+            // alg 는 방금 넣은 수까지 반영된 값이 온다(리스너보다 먼저 쓸 수 있다)
+            const [kp, setup, alg] = await Promise.all([m.kpuzzle.get(), m.setupAlg.get(), m.alg.get()]);
+            if (!solveArmed) return; // 기다리는 사이 이미 축하했거나 리셋됨
+            const pattern = kp.defaultPattern().applyAlg(setup.alg).applyAlg(alg.alg);
+            if (!pattern.experimentalIsSolved({ ignorePuzzleOrientation: true, ignoreCenterOrientation: true })) return;
+            solveArmed = false;
+            const ms = (lastMoveAt ?? solveStart) - solveStart;
+            const moves = alg.alg.toString().trim().split(/\s+/).filter(x => x && x !== FLIP_MOVE).length;
+            const wasChallenge = challenge;
+            await waitForAnimation();
+            celebrate(moves, ms);
+            if (wasChallenge) onChallengeSolved(Math.round(ms), moves);
+        }
+        // 마지막 수가 다 돌아간 뒤에 시작한다. 최소 0.35초, 최대 1.5초 기다림
+        async function waitForAnimation() {
+            const t0 = performance.now();
+            await new Promise(r => setTimeout(r, 350));
+            while (performance.now() - t0 < 1500) {
+                const info = await player.experimentalModel.coarseTimelineInfo.get();
+                if (info.atEnd) return;
+                await new Promise(r => setTimeout(r, 60));
+            }
+        }
+        function formatTime(ms) {
+            const s = ms / 1000;
+            if (s < 60) return s.toFixed(1) + '초';
+            return Math.floor(s / 60) + '분 ' + Math.floor(s % 60) + '초';
+        }
+        function celebrate(moves, ms) {
+            solvedEl.innerHTML = '🎉 완성! <strong>' + moves + '수</strong> · <strong>' + formatTime(ms) + '</strong>';
+            solvedEl.classList.remove('out');
+            solvedEl.hidden = false;
+            if (solvedFade) clearTimeout(solvedFade);
+            solvedFade = setTimeout(() => solvedEl.classList.add('out'), 6000);
+            if (reduceMotion.matches) return; // 동작 줄이기: 메시지만
+            confetti();
+            victorySpin();
+        }
+        function hideSolved() {
+            if (solvedFade) { clearTimeout(solvedFade); solvedFade = null; }
+            solvedEl.hidden = true;
+            solvedEl.classList.remove('out');
+        }
+
+        // 완성된 큐브가 한 바퀴 돌며 여섯 면을 보여준다. 끌거나 방향키를 누르면 바로 멈춘다(cancelTween).
+        function victorySpin() {
+            cancelTween();
+            const t0 = performance.now(), lon0 = viewLon, DUR = 1800;
+            function step(now) {
+                const p = Math.min(1, (now - t0) / DUR);
+                const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // easeInOut
+                setView(viewLat, lon0 + 360 * e);
+                tweenRaf = (p < 1) ? requestAnimationFrame(step) : null;
+            }
+            tweenRaf = requestAnimationFrame(step);
+        }
+
+        // 큐브 상자 가운데에서 큐브 여섯 색 조각이 터져 나와 떨어진다(약 2.5초). 라이브러리 없이 캔버스로.
+        const CONFETTI_COLORS = ['#ffffff', '#ffd500', '#ff2d2d', '#ff8a00', '#2f6bff', '#22c55e'];
+        function confetti() {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pg-confetti';
+            document.body.appendChild(canvas);
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const box = cubeBox.getBoundingClientRect();
+            const ox = box.left + box.width / 2, oy = box.top + box.height / 2;
+            const parts = Array.from({ length: 140 }, () => {
+                const a = Math.random() * Math.PI * 2, v = 6 + Math.random() * 9;
+                return {
+                    x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6,
+                    w: 7 + Math.random() * 6, h: 4 + Math.random() * 4,
+                    r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
+                    c: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+                };
+            });
+            const t0 = performance.now(), LIFE = 2600;
+            function frame(now) {
+                const t = now - t0;
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                ctx.globalAlpha = Math.max(0, 1 - Math.max(0, t - LIFE * 0.6) / (LIFE * 0.4)); // 끝 무렵 흐려짐
+                for (const q of parts) {
+                    q.vx *= 0.985; q.vy = q.vy * 0.985 + 0.35; // 공기 저항 + 중력
+                    q.x += q.vx; q.y += q.vy; q.r += q.vr;
+                    ctx.save();
+                    ctx.translate(q.x, q.y); ctx.rotate(q.r);
+                    ctx.fillStyle = q.c;
+                    ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h * Math.abs(Math.cos(q.r * 2))); // 뒤집히며 반짝임
+                    ctx.restore();
+                }
+                if (t < LIFE) requestAnimationFrame(frame); else canvas.remove();
+            }
+            requestAnimationFrame(frame);
         }
 
         // =====================================================================
@@ -1443,6 +1726,203 @@
         wire(algHandle, () => setAlgDrawer(!algDrawer.classList.contains('open')));
         wire(algClose, () => setAlgDrawer(false));
         setAlgDrawer(loadPref('pg.algsOpen', '0') === '1');
+
+        // =====================================================================
+        //  기록 세우기 (Supabase) — 왼쪽 서랍
+        //
+        //  "도전하기"를 누르면 새로 섞고, 첫 수부터 큐브 밑에 시간이 흐른다. 다 맞추면 축하 뒤
+        //  닉네임·시간·돌린 수를 records 표에 공개 키로 바로 넣는다. 순위는 best_records 뷰
+        //  (사람마다 역대 최고 한 줄)에서 읽는다. 여러 번 도전할 수 있다.
+        //  서버가 기록을 다시 확인하지 않는다(사용자 결정: 단순하게) — 사람이 낼 수 없는 기록
+        //  (초당 15수 넘게, 15수 미만)만 DB 제약이 거절한다. supabase/schema.sql 참고.
+        // =====================================================================
+        const SUPABASE_URL = 'https://moljrurjnwyyexzuyivn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_qT2kl-Q715TzeHVldzoMEA_PAIbT6sH'; // 공개 키 — 넣기와 순위 읽기만 된다
+        const rankDrawer = document.getElementById('rank-drawer');
+        const rankHandle = document.getElementById('rank-handle');
+        const rankPanel = document.getElementById('rank-panel');
+        const rkStart = document.getElementById('rk-start');
+        const rkMe = document.getElementById('rk-me');
+        const rkStatus = document.getElementById('rk-status');
+        const rkNick = document.getElementById('rk-nick');
+        const rkNickInput = document.getElementById('rk-nick-input');
+        const rkList = document.getElementById('rk-list');
+        const rkRename = document.getElementById('rk-rename');
+        const timerEl = document.getElementById('pg-timer');
+        let pendingRecord = null; // 닉네임을 정하거나 다시 보내기를 기다리는 기록
+        let timerRaf = null;
+
+        function clientId() {
+            let id = loadPref('pg.clientId', '');
+            if (!/^[0-9a-f-]{36}$/i.test(id)) { id = crypto.randomUUID(); savePref('pg.clientId', id); }
+            return id;
+        }
+        function fmtClock(ms) {
+            const s = ms / 1000, m = Math.floor(s / 60), rest = (s - m * 60).toFixed(1);
+            return m ? m + ':' + rest.padStart(4, '0') : rest + '초';
+        }
+        function setStatus(text, kind = '') {
+            rkStatus.textContent = text;
+            rkStatus.className = 'rk-status' + (kind ? ' ' + kind : '');
+        }
+
+        // --- 흐르는 시간 (큐브 밑) ---
+        function tickTimer() {
+            if (!challenge || solveStart === null) { timerRaf = null; return; }
+            const end = solveArmed ? performance.now() : lastMoveAt; // 다 맞추면 마지막 수에서 멈춘다
+            timerEl.textContent = fmtClock(end - solveStart).replace('초', '');
+            timerRaf = solveArmed ? requestAnimationFrame(tickTimer) : null;
+        }
+        function renderTimer() {
+            if (!challenge) { timerEl.hidden = true; return; }
+            timerEl.hidden = false;
+            if (solveStart === null) {
+                timerEl.textContent = '첫 수를 두면 시작';
+                timerEl.classList.add('waiting');
+            } else {
+                timerEl.classList.remove('waiting');
+                if (timerRaf === null) timerRaf = requestAnimationFrame(tickTimer);
+            }
+        }
+
+        // 도전 중인지에 따라 버튼 글자·상태 줄·시간을 맞춘다 (섞기·리셋·첫 수에서 불린다)
+        function renderChallengeState() {
+            rkStart.textContent = challenge ? '↺ 새로 섞어서 다시' : '▶ 도전하기';
+            if (challenge) {
+                setStatus(solveStart === null ? '도전 중 — 첫 수를 두면 시간이 시작돼요.'
+                                              : '도전 중… 다 맞추면 기록이 올라가요.');
+            } else if (!pendingRecord && rkStatus.textContent.startsWith('도전 중')) {
+                setStatus('');
+            }
+            renderTimer();
+        }
+
+        function startChallenge() {
+            clearPending();
+            player.experimentalSetupAlg = randomScramble();
+            player.alg = "";
+            player.jumpToEnd();
+            solveArmed = true; solveStart = null; lastMoveAt = null;
+            challenge = true;
+            pendingRecord = null;
+            rkNick.hidden = true;
+            hideSolved();
+            stopAllSpin(); tweenToDefault(); // 기준 시점에서 시작
+            renderChallengeState();
+            closeRankOnNarrow(); // 폰에선 서랍이 큐브를 덮으니 도전을 시작하면 닫는다
+        }
+
+        function onChallengeSolved(timeMs, movesCount) {
+            challenge = false;
+            renderChallengeState(); // 시간 숨김 — 축하 메시지가 최종 시간을 보여준다
+            const rec = { timeMs, movesCount };
+            openRank();
+            const nick = loadPref('pg.nickname', '');
+            if (nick) { sendRecord(rec, nick); return; }
+            pendingRecord = rec;
+            setStatus('처음이네요! 순위표에 올릴 닉네임을 정해 주세요.');
+            showNickForm('');
+        }
+
+        function showNickForm(value) {
+            rkNick.hidden = false;
+            rkNickInput.value = value;
+            rkNickInput.focus();
+        }
+
+        async function sendRecord(rec, nickname) {
+            setStatus('기록 올리는 중…');
+            try {
+                const res = await fetch(SUPABASE_URL + '/rest/v1/records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Prefer: 'return=minimal' },
+                    body: JSON.stringify({ client_id: clientId(), nickname, time_ms: rec.timeMs, moves_count: rec.movesCount }),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    // 23514 = DB check 제약 위반 (너무 빠르거나 수가 너무 적음, 닉네임 길이)
+                    throw new Error(err.code === '23514' ? '이 기록은 올릴 수 없어요.' : '기록을 올리지 못했어요.');
+                }
+                pendingRecord = null;
+                rkNick.hidden = true;
+                const prev = Number(loadPref('pg.best', '0'));
+                const improved = !prev || rec.timeMs < prev;
+                if (improved) savePref('pg.best', String(rec.timeMs));
+                setStatus(improved ? '🎉 최고 기록 ' + fmtClock(rec.timeMs) + '!'
+                                   : fmtClock(rec.timeMs) + ' — 최고 기록 ' + fmtClock(prev) + '은 그대로예요.', 'good');
+                loadBoard();
+            } catch (err) {
+                // 연결 실패 등 — 닉네임 칸을 다시 보여줘서 고치거나 다시 보낼 수 있게 한다
+                pendingRecord = rec;
+                const offline = err instanceof TypeError; // fetch 자체가 실패
+                setStatus(offline ? '기록 서버에 연결할 수 없어요. 잠시 후 다시 올려 주세요.' : err.message, 'bad');
+                showNickForm(nickname);
+            }
+        }
+
+        async function loadBoard() {
+            const nick = loadPref('pg.nickname', '');
+            rkRename.hidden = !nick;
+            const best = Number(loadPref('pg.best', '0'));
+            try {
+                const res = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=nickname,time_ms,moves_count' +
+                    '&order=time_ms.asc,created_at.asc&limit=20', { headers: { apikey: SUPABASE_KEY } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const rows = await res.json();
+                if (!rows.length) {
+                    rkList.innerHTML = '<li class="rk-empty">아직 기록이 없어요. 첫 번째가 되어 보세요!</li>';
+                } else {
+                    rkList.replaceChildren(...rows.map((r, i) => {
+                        const li = el('li', r.nickname === nick && r.time_ms === best ? 'me' : '');
+                        li.append(el('span', 'no', String(i + 1)), el('span', 'nm', r.nickname),
+                                  el('span', 'tm', fmtClock(r.time_ms)), el('span', 'mv', r.moves_count + '수'));
+                        return li;
+                    }));
+                }
+                rkMe.textContent = '';
+                if (best) {
+                    // 내 순위 = 나보다 빠른 사람 수 + 1 (목록 20등 밖이어도 알 수 있게 따로 센다)
+                    const cr = await fetch(SUPABASE_URL + '/rest/v1/best_records?select=time_ms&time_ms=lt.' + best,
+                        { method: 'HEAD', headers: { apikey: SUPABASE_KEY, Prefer: 'count=exact' } });
+                    const total = Number((cr.headers.get('content-range') || '').split('/')[1]);
+                    rkMe.innerHTML = '내 최고 <strong>' + fmtClock(best) + '</strong>' +
+                                     (Number.isFinite(total) ? ' · ' + (total + 1) + '등' : '');
+                }
+            } catch (err) {
+                // 무료 요금제는 한동안 안 쓰면 일시 정지된다 — 연습은 그대로 되게 조용히 알리기만
+                rkList.innerHTML = '<li class="rk-empty">순위표를 잠시 불러올 수 없어요.</li>';
+                console.warn('순위표를 불러오지 못함', err);
+            }
+        }
+
+        function setRankDrawer(open) {
+            rankDrawer.classList.toggle('open', open);
+            rankHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            rankPanel.inert = !open; // 닫혀 있을 땐 화면 밖 버튼에 Tab 이 가지 않게
+            savePref('pg.rankOpen', open ? '1' : '0');
+            if (open) loadBoard();
+        }
+        function openRank() { if (!rankDrawer.classList.contains('open')) setRankDrawer(true); }
+        function closeRankOnNarrow() {
+            if (window.matchMedia('(max-width: 1079px)').matches) setRankDrawer(false);
+        }
+
+        wire(rankHandle, () => setRankDrawer(!rankDrawer.classList.contains('open')));
+        wire(document.getElementById('rk-close'), () => setRankDrawer(false));
+        wire(rkStart, startChallenge);
+        wire(rkRename, () => showNickForm(loadPref('pg.nickname', '')));
+        rkNick.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nick = rkNickInput.value.trim();
+            if ([...nick].length < 2 || [...nick].length > 12) { setStatus('닉네임은 2~12자로 해 주세요.', 'bad'); return; }
+            savePref('pg.nickname', nick);
+            rkNickInput.blur(); // 포커스가 남으면 큐브 키 입력을 먹는다
+            rkNick.hidden = true;
+            rkRename.hidden = false;
+            if (pendingRecord) sendRecord(pendingRecord, nick);
+            else setStatus('닉네임을 바꿨어요. 다음 기록부터 이 이름으로 올라가요.', 'good');
+        });
+        setRankDrawer(loadPref('pg.rankOpen', '0') === '1');
 
         setLayout(layout);
         setDragTurn(dragTurn);
