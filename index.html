@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
@@ -33,17 +33,29 @@
     </nav>
 
     <section id="hero">
-        <div id="cube-canvas-container"></div>
-        <div class="hero-content fade-in">
-            <h1 class="hero-title">돌리다 보면 풀린다!<br><span class="highlight-cyan">3D로 배우는 가장 직관적인</span> 큐브 해법</h1>
-            <p class="hero-subtitle">더 이상 복잡한 기호와 텍스트 공식에 좌절하지 마세요.</p>
-        </div>
-        <div class="hero-actions">
-            <a href="tutorial.html" class="cta-button">7단계 해법 시작하기 →</a>
-            <a href="notation.html" class="ghost-button">기호부터 익히기</a>
+        <div class="hero-inner">
+            <div class="hero-text fade-in">
+                <h1 class="hero-title">돌리다 보면 풀린다!<br><span class="highlight-cyan">3D로 배우는 가장 직관적인</span> 큐브 해법</h1>
+                <p class="hero-subtitle">더 이상 복잡한 기호와 텍스트 공식에 좌절하지 마세요.</p>
+                <div class="hero-actions">
+                    <a href="tutorial.html" class="cta-button">7단계 해법 시작하기 →</a>
+                    <a href="notation.html" class="ghost-button">기호부터 익히기</a>
+                </div>
+            </div>
+
+            <!-- 스스로 섞였다가 풀리는 큐브 (hero.js). 아래 줄은 지금 돌리는 수 -->
+            <div class="hero-stage">
+                <div id="cube-canvas-container" role="img" aria-label="스스로 섞였다가 다시 맞춰지는 큐브. 끌어서 돌려 볼 수 있어요."></div>
+                <div class="hero-moves" id="hero-moves" aria-hidden="true">
+                    <span class="hm-label" id="hm-label"></span>
+                    <span class="hm-seq" id="hm-seq"></span>
+                </div>
+                <p class="hero-hint" id="hero-hint">끌어서 돌려 보세요</p>
+            </div>
         </div>
     </section>
 
-    <script src="main.js"></script>
+    <script src="hero.js"></script>
+    <script src="main.js?v=2"></script>
 </body>
 </html>

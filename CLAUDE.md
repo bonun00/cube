@@ -4,11 +4,12 @@
 
 | 파일 | 내용 |
 |---|---|
-| `index.html` | 랜딩 (Three.js 히어로 큐브) |
+| `index.html` | 랜딩. 왼쪽 글·오른쪽 큐브 (좁으면 큐브가 위) |
+| `hero.js` | 랜딩 큐브 (Three.js r128, index 에서만). 스스로 섞였다가 반대 순서로 풀리길 되풀이 — 면이 진짜로 돈다(한 층을 pivot 에 붙여 돌리고 정수로 맞춤). 큐브 밑 줄에 지금 도는 수. 끌면 돌고(관성), 마우스 따라 살짝 기운다. 화면 밖이면 멈추고, 동작 줄이기면 저절로 안 돈다 |
 | `notation.html` | 기호 읽는 법 — `R L U D F B`, `'`, `2`, `w` 만 가르친다 |
 | `tutorial.html` | 7단계 해법. 공식이 `data-alg` 속성에 들어 있다 |
 | `playground.html` | **직접 해보기.** 이 파일 하나에 전용 CSS·JS가 다 들어 있다 |
-| `main.js` | 공용 스크립트 (네비, 히어로 큐브, 튜토리얼 탭) |
+| `main.js` | 공용 스크립트 (네비, 튜토리얼 탭) |
 | `styles.css` | 공용 스타일 |
 | `supabase/schema.sql` | 기록 세우기 순위표 DB (Supabase SQL Editor 에서 실행, 여러 번 실행해도 데이터 유지) |
 | `gemini-code-*.html` | 초기 생성물. 현재 사이트와 무관 |
@@ -174,6 +175,7 @@ screenToCube(letter) = SIDE[(cameraSideIndex() + SIDE.indexOf(letter)) % 4]
   cam.updateMatrixWorld(true);   // 렌더가 멈춰 있으면 행렬이 안 갱신된다 — 반드시
   const v = cam.position.clone().set(x, y, z).project(cam);   // NDC → 캔버스 rect 로 환산
   ```
+- **공용 `styles.css`·`main.js` 를 고치면 네 페이지의 `?v=N` 을 같이 올릴 것.** 방문자 브라우저가 옛 파일을 쥐고 있으면 새 HTML 과 어긋난다(옛 main.js 가 새 랜딩에 큐브를 하나 더 그리는 식)
 - **브라우저가 옛 HTML 을 캐시로 보여줄 때가 있다** (`python -m http.server` 는 캐시 헤더를 안 준다). 고친 게 안 보이면 `playground.html?v=2` 처럼 쿼리를 붙여 새로 불러올 것.
 - **브라우저 패널이 숨겨져 있으면 `requestAnimationFrame` 이 안 돈다.** 방향키 시점 회전·기준 시점 복귀가 멈추고, 스크린샷은 빈 화면이 나오거나 시간 초과된다. 시점 확인은 드래그(동기)로 하고, 스크린샷을 찍으면 프레임이 한 번 돌아서 복귀 애니메이션이 끝까지 간다.
 - 커밋 메시지는 한국어, `feat:` / `fix:` 접두사를 쓴다.
